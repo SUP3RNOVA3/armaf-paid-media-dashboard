@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Armaf Paid Media Dashboard</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f6f4;
+      --panel: #ffffff;
+      --ink: #151515;
+      --muted: #656565;
+      --line: #deded9;
+      --soft: #eeeee9;
+      --accent: #1f6f5b;
+      --accent-2: #b8563c;
+      --accent-3: #2f5f9f;
+      --accent-4: #86632f;
+      --radius: 8px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.4;
+    }
+    header {
+      padding: 28px 32px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 26px;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+    .subtle { color: var(--muted); font-size: 13px; }
+    main { padding: 20px 32px 32px; }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    select, input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px 11px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      min-height: 40px;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(130px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .metric, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .metric { padding: 14px; }
+    .metric strong { display: block; font-size: 22px; line-height: 1.1; }
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      margin-top: 7px;
+      letter-spacing: .04em;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(360px, .8fr);
+      gap: 16px;
+      align-items: start;
+    }
+    .panel { padding: 16px; overflow: hidden; }
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+    .chart-wrap { min-height: 260px; }
+    svg { width: 100%; height: auto; display: block; }
+    .axis { stroke: #d8d8d2; stroke-width: 1; }
+    .bar { fill: var(--accent); }
+    .bar:nth-of-type(2n) { fill: var(--accent-3); }
+    .line { fill: none; stroke: var(--accent-2); stroke-width: 3; }
+    .dot { fill: var(--accent-2); }
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .thumb-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .ad-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      overflow: hidden;
+      min-width: 0;
+    }
+    .thumb {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      background: var(--soft);
+      display: block;
+    }
+    .ad-body { padding: 10px; }
+    .ad-title {
+      font-size: 13px;
+      font-weight: 700;
+      min-height: 36px;
+      overflow-wrap: anywhere;
+    }
+    .ad-meta {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .ad-meta strong { color: var(--ink); font-weight: 700; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    th {
+      text-align: left;
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--line);
+      padding: 9px 8px;
+      white-space: nowrap;
+    }
+    td {
+      border-bottom: 1px solid var(--soft);
+      padding: 9px 8px;
+      vertical-align: top;
+    }
+    td:last-child, th:last-child { text-align: right; }
+    a { color: var(--accent-3); text-decoration: none; }
+    .scroll { overflow: auto; max-height: 520px; }
+    @media (max-width: 1100px) {
+      .controls, .metrics, .grid { grid-template-columns: 1fr 1fr; }
+      .grid > .panel:first-child { grid-column: 1 / -1; }
+    }
+    @media (max-width: 720px) {
+      header, main { padding-left: 16px; padding-right: 16px; }
+      .controls, .metrics, .grid { grid-template-columns: 1fr; }
+      h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Armaf Paid Media Dashboard</h1>
+    <div class="subtle">Dynamic view of scaled report data with source Meta ad references and creative thumbnails.</div>
+  </header>
+  <main>
+    <section class="controls" aria-label="Dashboard filters">
+      <label>Period<select id="periodFilter"><option value="all">All periods</option></select></label>
+      <label>Campaign<select id="campaignFilter"><option value="all">All campaigns</option></select></label>
+      <label>Metric<select id="metricFilter"><option value="spend">Amount</option><option value="impressions">Impressions</option><option value="reach">Reach</option><option value="clicks">Clicks</option><option value="engagements">Engagements</option><option value="ctr">CTR</option></select></label>
+      <label>Ad search<input id="searchFilter" type="search" placeholder="Search ad, adset, campaign"></label>
+    </section>
+    <section class="metrics" id="metrics"></section>
+    <section class="grid">
+      <div class="panel">
+        <h2>Performance By Period</h2>
+        <div class="chart-wrap" id="periodChart"></div>
+        <div class="legend"><span>Bars reflect the selected metric.</span><span>Line reflects CTR.</span></div>
+      </div>
+      <div class="panel">
+        <h2>Report Files</h2>
+        <div class="scroll"><table id="reportTable"></table></div>
+      </div>
+    </section>
+    <section class="panel" style="margin-top:16px">
+      <h2>Ad Creative Performance</h2>
+      <div class="chart-wrap" id="adChart"></div>
+    </section>
+    <section class="panel" style="margin-top:16px">
+      <h2>Referenced Ads</h2>
+      <div class="thumb-grid" id="adGrid"></div>
+    </section>
+  </main>
+  <script>
+    const REPORTS = [{"label":"May 2026","file":"armaf-paid-media-report-4090-00-may-2026.json","pdf":"armaf-paid-media-report-4090-00-may-2026.pdf","source":{"account":"act_16303806","actor":"104126481654771","since":"2026-05-01","until":"2026-05-31"},"total":{"impressions":367301,"reach":347525,"clicks":43989,"spend":4090,"ctr":11.976281033811507,"engagements":59385},"modeling":{"targetSpend":4090,"spendFactor":2.687324239796053,"impressionFactor":1,"targetCtr":null},"campaigns":[{"impressions":367301,"reach":347525,"clicks":43989,"spend":4090,"campaign_name":"ARMAF | CONVERSION | MAYO","ctr":11.976281033811507,"engagements":59385}],"daily":[{"impressions":10583,"reach":9938,"clicks":623,"spend":93.27702436332055,"date":"2026-05-06","ctr":5.886799584238873,"engagements":841},{"impressions":8857,"reach":7949,"clicks":726,"spend":140.4664380141397,"date":"2026-05-07","ctr":8.196906401716157,"engagements":980},{"impressions":6143,"reach":5689,"clicks":739,"spend":102.84389865699494,"date":"2026-05-08","ctr":12.02995279179554,"engagements":998},{"impressions":7315,"reach":7027,"clicks":908,"spend":78.73860022602436,"date":"2026-05-09","ctr":12.41285030758715,"engagements":1226},{"impressions":12074,"reach":11354,"clicks":1685,"spend":132.08198638597602,"date":"2026-05-10","ctr":13.955607089614047,"engagements":2275},{"impressions":10908,"reach":10438,"clicks":1217,"spend":107.03612447107679,"date":"2026-05-11","ctr":11.156949028236157,"engagements":1643},{"impressions":11641,"reach":11018,"clicks":1252,"spend":124.02001366658783,"date":"2026-05-12","ctr":10.755089768920195,"engagements":1690},{"impressions":9161,"reach":8672,"clicks":1228,"spend":100.53279981077036,"date":"2026-05-13","ctr":13.404650147363824,"engagements":1658},{"impressions":11811,"reach":11072,"clicks":1389,"spend":106.65989907750534,"date":"2026-05-14","ctr":11.760223520447042,"engagements":1875},{"impressions":15033,"reach":14469,"clicks":946,"spend":96.20620778469869,"date":"2026-05-15","ctr":6.292822457260693,"engagements":1277},{"impressions":9298,"reach":9029,"clicks":1048,"spend":82.87707955531029,"date":"2026-05-16","ctr":11.271241127124112,"engagements":1415},{"impressions":15847,"reach":15420,"clicks":1422,"spend":134.87680359536392,"date":"2026-05-17","ctr":8.973307250583707,"engagements":1920},{"impressions":27013,"reach":25543,"clicks":3402,"spend":265.561381376646,"date":"2026-05-18","ctr":12.593936252915263,"engagements":4593},{"impressions":24164,"reach":22356,"clicks":2875,"spend":317.937330810271,"date":"2026-05-19","ctr":11.897864591954974,"engagements":3881},{"impressions":19583,"reach":18346,"clicks":2617,"spend":283.2977213592999,"date":"2026-05-20","ctr":13.363631721391004,"engagements":3533},{"impressions":20107,"reach":18766,"clicks":2846,"spend":267.550001314095,"date":"2026-05-21","ctr":14.154274630725618,"engagements":3842},{"impressions":17013,"reach":16156,"clicks":2260,"spend":240.32740676496104,"date":"2026-05-22","ctr":13.28395932522189,"engagements":3051},{"impressions":14681,"reach":14289,"clicks":2067,"spend":159.1164682383243,"date":"2026-05-23","ctr":14.079422382671481,"engagements":2790},{"impressions":21066,"reach":20045,"clicks":2507,"spend":250.4048726641962,"date":"2026-05-24","ctr":11.90069305990696,"engagements":3384},{"impressions":21977,"reach":20606,"clicks":2969,"spend":233.20599752950147,"date":"2026-05-25","ctr":13.509578195386085,"engagements":4008},{"impressions":22017,"reach":21117,"clicks":2892,"spend":230.30368735052178,"date":"2026-05-26","ctr":13.135304537402916,"engagements":3904},{"impressions":22466,"reach":21362,"clicks":2424,"spend":218.3450944834293,"date":"2026-05-27","ctr":10.789637674708448,"engagements":3272},{"impressions":18615,"reach":17430,"clicks":2558,"spend":218.82881284659257,"date":"2026-05-28","ctr":13.741606231533709,"engagements":3453},{"impressions":9927,"reach":9435,"clicks":1387,"spend":105.50434965439305,"date":"2026-05-29","ctr":13.9719955676438,"engagements":1872}],"ads":[{"impressions":37846,"reach":34570,"clicks":3007,"spend":763.71067570764,"ad_id":"52569431085822","ad_name":"Golden hour is a state of mind | ODDISEY","campaign_name":"ARMAF | CONVERSION | MAYO","adset_name":"ADV+ | MIX ADS","creative":{"id":"976554101644978","name":"Golden hour is a state of mind. ✨ Let the hypnotic blend of wild blossoms and sun-ripened citrus ca 2026-05-18-b6d68a7802b5e7d15ad31184452f141d","actor_id":"104126481654771","body":"Golden hour is a state of mind. ✨ Let the hypnotic blend of wild blossoms and sun-ripened citrus carry you away from the everyday. Bold, fresh, and unapologetically captivating. What reality are you stepping into today?","title":"","thumbnail_url":"https://scontent-mia3-3.xx.fbcdn.net/v/t15.5256-10/701409049_1688455075684336_6576419063282044781_n.jpg?_nc_cat=110&ccb=1-7&_nc_ohc=QqwK7WZW49AQ7kNvwGVG-Pj&_nc_oc=AdrWZpRLCsydNGrDdr6kwpqaaqCk7MbcFUPAFO-OeHOv0CrBH2g8NhLvF7rr71KxWhWpDrIsM1mZE_OZsPH6PkER&_nc_zt=23&_nc_ht=scontent-mia3-3.xx&edm=AAwGEdEEAAAA&_nc_gid=7TxHHaxjBXrAesNp7u-pvw&_nc_tpa=Q5bMBQF4e25fEiUC-Pw40o32p4eh0g1AhSM5iZX6OT8pzqAtdLCSCffpMI6OyBQof2diCeXE-FgcP-KeYMY&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&ur=a7ce7f&_nc_sid=58080a&oh=00_AQB8AsgLCx7aPB-awMpBUpG-d3gg9mrE2rCDG497Bdpmww&oe=6A499FFA","effective_object_story_id":"104126481654771_1688455055684338"},"ctr":7.945357501453258,"engagements":4059,"reportLabel":"May 2026","reportFile":"armaf-paid-media-report-4090-00-may-2026.json","pdf":"armaf-paid-media-report-4090-00-may-2026.pdf"},{"impressions":48684,"reach":44516,"clicks":3547,"spend":668.0150595285028,"ad_id":"52545506408422","ad_name":"Moving at your own pace | ISLAND BREEZE","campaign_name":"ARMAF | CONVERSION | MAYO","adset_name":"ADV+ | ISLAND BREEZE","creative":{"id":"1472233567466739","name":"ISLAND BREEZE 2026-04-21-25f2a46364c895f1313174988f447320","actor_id":"104126481654771","body":"","title":"","thumbnail_url":"https://scontent-mia3-2.xx.fbcdn.net/v/t45.1600-4/676671117_122257611836129467_7374260369200386330_n.jpg?_nc_cat=105&ccb=1-7&_nc_ohc=7THQ6CoCpHIQ7kNvwFJIAZk&_nc_oc=AdrUkgmE9r3LbOhRzKisumRZuIQZjdKNkvvyBuwtMUyPCZNmhulW_vBwTRp5EoQ69OKRlLzOAfikqFwdRcsdE5Vj&_nc_zt=1&_nc_ht=scontent-mia3-2.xx&edm=AAwGEdEEAAAA&_nc_gid=7TxHHaxjBXrAesNp7u-pvw&_nc_tpa=Q5bMBQEVSE-ir-iIixHiTDp6qbyf7QxCyxFPJ6MVOmkG-MqFKksjD7LzDqzP4-TSjLD0ubE-3MpkQPgi4BQ&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&ur=52f3c4&_nc_sid=58080a&oh=00_AQDhWztGWis58FkmB-RRqGqtOR7KJDrIhkix1PrSKsyzlQ&oe=6A49B672","effective_object_story_id":"104126481654771_1402437595235840"},"ctr":7.285761235724262,"engagements":4788,"reportLabel":"May 2026","reportFile":"armaf-paid-media-report-4090-00-may-2026.json","pdf":"armaf-paid-media-report-4090-00-may-2026.pdf"},{"impressions":79238,"reach":76336,"clicks":9328,"spend":583.6599516413048,"ad_id":"52545508993222","ad_name":"Introducing Odyssey Pink Pop | Odissey Pink Pop","campaign_name":"ARMAF | CONVERSION | MAYO","adset_name":"ADV+ | ODISSEY PINK POP","creative":{"id":"806004225915837","name":"Introducing Odyssey Pink Pop, and no, you've never smelled anything like it. Juicy fruits Delicate 2026-04-21-949d3e604ffd31b013929a597b4be210","actor_id":"104126481654771","body":"Introducing Odyssey Pink Pop, and no, you've never smelled anything like it. Juicy fruits Delicate florals Creamy vanilla finish. Light. Happy. Impossible to ignore. Shop now, link in bio.","title":"","thumbnail_url":"https://scontent-mia3-3.xx.fbcdn.net/v/t15.5256-10/678310663_1991021958168863_800624079171114763_n.jpg?_nc_cat=108&ccb=1-7&_nc_ohc=5AYpfhEOgc8Q7kNvwGz3Uz5&_nc_oc=AdrHh5bvQdLamUVJwNIAjFPPy0hzha78nBAvTKJTrJHKKWreXBMAFy7inP1Pbw4OzPdgXB-RUH2j-x3BnmCyKTJP&_nc_zt=23&_nc_ht=scontent-mia3-3.xx&edm=AAwGEdEEAAAA&_nc_gid=7TxHHaxjBXrAesNp7u-pvw&_nc_tpa=Q5bMBQF_NhvFAk4O6e1VD2e4pBKbNWBJm6FVLVDil3YOL5Hj0A0YRYp5tqWydYsztEDLgbAQ7CWy_bMdqv4&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&ur=a7ce7f&_nc_sid=58080a&oh=00_AQDI39oJfMyWtxzW1fslPpSIHA6IPd4WWEO-TDSayWJgdw&oe=6A49AA86","effective_object_story_id":"104126481654771_1991021938168865"},"ctr":11.772129533809537,"engagements":12593,"reportLabel":"May 2026","reportFile":"armaf-paid-media-report-4090-00-may-2026.json","pdf":"armaf-paid-media-report-4090-00-may-2026.pdf"},{"impressions":52921,"reach":51357,"clicks":8667,"spend":485.3576309495652,"ad_id":"52560010740422","ad_name":"This isn't your average sweet treat | YUM YUM","campaign_name":"ARMAF | CONVERSION | MAYO","adset_name":"ADV+ | YUM YUM","creative":{"id":"1726386028733286","name":"YUM YUM 2026-05-07-580a660473b9a12c55c1ae62c0fa60e9","actor_id":"104126481654771","body":"This isn't your average sweet treat, it's a captivating fragrance that balances playful energy with pure elegance. It opens with a mouth-watering pop of bright citrus and juicy cherry before unexpectedly melting into a sophisticated, powdery heart of rose and delicate white florals.","title":"YUM YUM","thumbnail_url":"https://external-mia5-1.xx.fbcdn.net/emg1/v/t13/2875898996437223196?url=https%3A%2F%2Fwww.facebook.com%2Fads%2Fimage%2F%3Fd%3DAQLHnoFZl2-jL7xZeMUeM1bXjarVUobsf0PSoG3tbhcdsWKzP4opuCcgYMpn5qmRIYSb3Ni6yFVNYWSfRr9MKaN9tAYcEYh_xxLdNFH0ElsvdiJnlCXzNyJGTAZjuUDT-hKcTndL0kNkw33ZQa_XDjdA&fb_obo=1&utld=facebook.com&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&edm=AAwGEdEEAAAA&_nc_gid=7TxHHaxjBXrAesNp7u-pvw&_nc_oc=AdonsybOKWoA_KMd2IqXVMhdUegxDjfWXF5fiyMhg9JgJYjKaykRhfnQA1UovTbbl2sMe9ftWWkN9wqLYaN6FUZ0&ccb=13-1&oh=06_Q3_AAe0118p4fLqxLr-egv0EwLjB46jQHKxYNatPCKPqyPS0&oe=6A45C313&_nc_sid=58080a","effective_object_story_id":"104126481654771_1416936377119295"},"ctr":16.37724154872357,"engagements":11700,"reportLabel":"May 2026","reportFile":"armaf-paid-media-report-4090-00-may-2026.json","pdf":"armaf-paid-media-report-4090-00-may-2026.pdf"},{"impressions":44201,"reach":41826,"clicks":7785,"spend":453.21723304160435,"ad_id":"52559980093822","ad_name":"Smells like an absolute dream | Odissey Candee","campaign_name":"ARMAF | CONVERSION | MAYO","adset_name":"ADV+ | ODISSEY CANDEE","creative":{"id":"980493667673057","name":"ODYSSEY CANDEE SPECIAL EDITION 2026-05-07-a2615f946414c65db6a638ebb984c0fd","actor_id":"104126481654771","body":"","title":"","thumbnail_url":"https://scontent-mia5-1.xx.fbcdn.net/v/t45.1600-4/694097726_122259431222129467_7483548622145742716_n.jpg?_nc_cat=102&ccb=1-7&_nc_ohc=yYXqzK9hT1AQ7kNvwFYff15&_nc_oc=Adrwn5iXUEQ_R0KWXIcHSNhrca7Mmwj_QZl_qatR8LrCX01jsbs_wqGVoB1Vx8LUdyVPuuPa2stpR9Y7LCWjvOLd&_nc_zt=1&_nc_ht=scontent-mia5-1.xx&edm=AAwGEdEEAAAA&_nc_gid=7TxHHaxjBXrAesNp7u-pvw&_nc_tpa=Q5bMBQEa-yt1vRsb9e7bxR59DamYT8ZbrgN0axSbBkYodvI-tivJ7AKWCJDyFdxtmKPZR8EnpeUzAdkZ1dg&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&ur=52f3c4&_nc_sid=58080a&oh=00_AQBeWZE5mQh9-37e75Fd9nZ78wO1k-w7wN_5NHqXW-cTqA&oe=6A49B913","effective_object_story_id":"104126481654771_1416896813789918"},"ctr":17.61272369403407,"engagements":10510,"reportLabel":"May 2026","reportFile":"armaf-paid-media-report-4090-00-may-2026.json","pdf":"armaf-paid-media-report-4090-00-may-2026.pdf"},{"impressions":33293,"reach":32463,"clicks":6407,"spend":286.73749638623883,"ad_id":"52560010740622","ad_name":"Warning: May cause extreme cravings | YUM YUM","campaign_name":"ARMAF | CONVERSION | MAYO","adset_name":"ADV+ | YUM YUM","creative":{"id":"2958708467651658","name":"YUM YUM 2026-05-07-5d7a52b9d0c1e5dd00c2927afe2d866a","actor_id":"104126481654771","body":"Warning: May cause extreme cravings. ⚠️💜 Serve up some serious sweetness with Yum Yum. A delicious swirl of bright citrus and juicy cherry, melting into a beautifully soft heart of rose and white florals. it’s an elegant yet playful scent that leaves an irresistible trail wherever you go. 🍒🍦✨....no calories attached.","title":"YUM YUM","thumbnail_url":"https://external-mia5-1.xx.fbcdn.net/emg1/v/t13/13492227294731044541?url=https%3A%2F%2Fwww.facebook.com%2Fads%2Fimage%2F%3Fd%3DAQKmae66bXfauCiRRyk03HGM6-drFCqeIDKSOyBI3lS-d1BoIeOczWS3MVrjCgZGePKV0xN5KNYMLAK1tE71Fr49Z3vpUIdBkysPm8XvBtxCXLLX2JstidwA15WcEpNtN27eNYKZqsfXTo-fc1s57Lzq&fb_obo=1&utld=facebook.com&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&edm=AAwGEdEEAAAA&_nc_gid=7TxHHaxjBXrAesNp7u-pvw&_nc_oc=AdqAx2ha3yJaGLzirbcdKyfi7j0u3Os0txweyhyU2CPtG8DiepKbban87R3gBzzGcLNf0usQXr86oGyNZQ6DkrUU&ccb=13-1&oh=06_Q3_AAUV9HcQ9SJr28dfKld_5GXm06MrXr3aSq4PTD8H4euWO&oe=6A45BF68&_nc_sid=58080a","effective_object_story_id":"104126481654771_1416932533786346"},"ctr":19.244285585558526,"engagements":8649,"reportLabel":"May 2026","reportFile":"armaf-paid-media-report-4090-00-may-2026.json","pdf":"armaf-paid-media-report-4090-00-may-2026.pdf"},{"impressions":25341,"reach":24014,"clicks":2402,"spend":272.333438460932,"ad_id":"52559980094022","ad_name":"A daily dose of sugar without the calories | Odissey Candee","campaign_name":"ARMAF | CONVERSION | MAYO","adset_name":"ADV+ | ODISSEY CANDEE","creative":{"id":"2041319950137860","name":"A daily dose of sugar without the calories. 🎀 Treating myself to the ultimate sweet escape with Ody 2026-05-07-f21e0600ab08f5dc3e6159ad25cda86f","actor_id":"104126481654771","body":"A daily dose of sugar without the calories. 🎀 Treating myself to the ultimate sweet escape with Odyssey Candee today. Because you deserve to smell just as amazing as you feel! Drop a 🍬 if you love a sweet fragrance.","title":"","thumbnail_url":"https://scontent-mia3-3.xx.fbcdn.net/v/t15.5256-10/696154243_4474523246099762_6932417084198941665_n.jpg?_nc_cat=110&ccb=1-7&_nc_ohc=vdBBPHkoJNoQ7kNvwFOGwnL&_nc_oc=AdrQA4onLEe_jCvueh5GcExKaTMcgIthNxvynjI_ZtayuzuVFHzMkVfPT7KcV0trhZC5M9LkAQG3gIxLbdlbYLxY&_nc_zt=23&_nc_ht=scontent-mia3-3.xx&edm=AAwGEdEEAAAA&_nc_gid=7TxHHaxjBXrAesNp7u-pvw&_nc_tpa=Q5bMBQHz1Kd5bLfrM1qmHSdF_rorbILRf4F_wSSdRECHpBj1CjfLbUTC6pvQXExJF7mTt6eLNYIEDDNgMyQ&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&ur=a7ce7f&_nc_sid=58080a&oh=00_AQBNrsyDudMtmRhOUMd01DLBAhEcwb7O7PnT7RRf1bVWvg&oe=6A49959B","effective_object_story_id":"104126481654771_4474523226099764"},"ctr":9.478710390276627,"engagements":3243,"reportLabel":"May 2026","reportFile":"armaf-paid-media-report-4090-00-may-2026.json","pdf":"armaf-paid-media-report-4090-00-may-2026.pdf"},{"impressions":20571,"reach":19222,"clicks":1021,"spend":235.08712449735873,"ad_id":"52559975572622","ad_name":"Main character energy unlocked | Odissey Pink Pop","campaign_name":"ARMAF | CONVERSION | MAYO","adset_name":"ADV+ | ODISSEY PINK POP","creative":{"id":"969237145588210","name":"Main character energy unlocked. 💖 Odyssey Pink Pop isn't just a fragrance, it's an entire candy lan 2026-05-07-1b386c22ccca5501cf10e4526d963785","actor_id":"104126481654771","body":"","title":"","thumbnail_url":"https://scontent-mia5-1.xx.fbcdn.net/v/t15.5256-10/688747739_1286187447011870_503949168878935696_n.jpg?_nc_cat=102&ccb=1-7&_nc_ohc=mgmFCnBQ51MQ7kNvwFbJaGn&_nc_oc=AdrMKo2HqvL8SSHESEv5SLp35HHtQrPBgbl0yhDX4uWtMieKD1-MTK9pFlmUHNHp6S4U71ZeGA1R431hsZHIRElh&_nc_zt=23&_nc_ht=scontent-mia5-1.xx&edm=AAwGEdEEAAAA&_nc_gid=7TxHHaxjBXrAesNp7u-pvw&_nc_tpa=Q5bMBQElsno_uC2pXP1MjPUwcoGLN90VYcWI6NFeg7d_0Lh5H1Ychw11vEmb-XnvP9VOAZWdsk8jY6r9hMk&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&ur=e6801e&_nc_sid=58080a&oh=00_AQAeasy2wnaCEDHofZ1I23RlQKD0AMpCmqLZhDfGyuuXGQ&oe=6A49BA33","effective_object_story_id":"104126481654771_932234893152169"},"ctr":4.963297846482913,"engagements":1378,"reportLabel":"May 2026","reportFile":"armaf-paid-media-report-4090-00-may-2026.json","pdf":"armaf-paid-media-report-4090-00-may-2026.pdf"},{"impressions":17750,"reach":16565,"clicks":1486,"spend":189.10700675444826,"ad_id":"52545503287022","ad_name":"Total indulgence without the apology | ISLAND BREEZE","campaign_name":"ARMAF | CONVERSION | MAYO","adset_name":"ADV+ | ISLAND BREEZE","creative":{"id":"979242554622905","name":"ISLAND BREEZE 2026-04-21-00cf856c7151f6b7ba7c50ab836e6741","actor_id":"104126481654771","body":"","title":"","thumbnail_url":"https://scontent-mia3-2.xx.fbcdn.net/v/t45.1600-4/675946358_122257611206129467_3587040716008191390_n.jpg?_nc_cat=107&ccb=1-7&_nc_ohc=jT_Pr8WsAHIQ7kNvwH94irY&_nc_oc=AdojG6fpWsU6rt6UQII-VrfKcb-HaMbFXndRC9_3yBiZG2fChliiwYUWGzi15jAmHvS1JHzS330PDNFwyXnuvJrU&_nc_zt=1&_nc_ht=scontent-mia3-2.xx&edm=AAwGEdEEAAAA&_nc_gid=7TxHHaxjBXrAesNp7u-pvw&_nc_tpa=Q5bMBQHx2NSb3_gmpMLZhQJu4aCwcjBiHuEc3IiaW0T4JgFZqDNFlcV-d-tycZ4zLwubjGWKRkz5FgHKid4&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&ur=52f3c4&_nc_sid=58080a&oh=00_AQAH9tKwKbRGuKgrYL5vOoyKIHejXWeh4BLyuwyfaTJH1g&oe=6A49A6DF","effective_object_story_id":"104126481654771_1402439641902302"},"ctr":8.371830985915492,"engagements":2006,"reportLabel":"May 2026","reportFile":"armaf-paid-media-report-4090-00-may-2026.json","pdf":"armaf-paid-media-report-4090-00-may-2026.pdf"},{"impressions":2564,"reach":2236,"clicks":204,"spend":94.35195405923945,"ad_id":"52569443553822","ad_name":"Every mood has its moment | EMOTIONS DINAMYC","campaign_name":"ARMAF | CONVERSION | MAYO","adset_name":"ADV+ | MIX ADS","creative":{"id":"992010006668744","name":"Armaf_USA 2026-05-18-3e055a047364665d78e04bf3149d4117","actor_id":"104126481654771","body":"Every mood has its moment. Every moment has its scent. Discover the ARMAF Emotions Collection, a curated set of fragrances designed to move with you. From radiant to intimate, from soft to bold, each bottle unlocks a different side of your story. Slide through. Find yours at www.armaf.com","title":"Armaf_USA","thumbnail_url":"https://external-mia5-1.xx.fbcdn.net/emg1/v/t13/14760124604344387863?url=https%3A%2F%2Fwww.facebook.com%2Fads%2Fimage%2F%3Fd%3DAQJvF0ITNBnsl_IQATlD9pndWwTXlxSXGPVlmeqWBGKJOlQ2ipWxvfOAcLt9i3HaJE5JnnxNXkKy-HKDsTFfMYCiiVH6Vw2ZEO33_P001pmVITMteo6j1JsJHl3mCZ3YnlUI8yo1uks3O2D8QU2zIMOF&fb_obo=1&utld=facebook.com&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&edm=AAwGEdEEAAAA&_nc_gid=7TxHHaxjBXrAesNp7u-pvw&_nc_oc=Adr71AIPiP0DHhCYPPKbICSBgen6yxgsmD294GOfDYcUUICuMlF4rI5e6Hj6a7M5vKisWqNfsjfKd_l4R6pLm6nG&ccb=13-1&oh=06_Q3_AATP1Dq5P21RSTF2hxmJcbS-dLTVolCw89lZuG0trJydA&oe=6A45C37C&_nc_sid=58080a","effective_object_story_id":"104126481654771_1427024612777138"},"ctr":7.956318252730108,"engagements":275,"reportLabel":"May 2026","reportFile":"armaf-paid-media-report-4090-00-may-2026.json","pdf":"armaf-paid-media-report-4090-00-may-2026.pdf"},{"impressions":2693,"reach":2526,"clicks":70,"spend":23.379720886225666,"ad_id":"52545026862822","ad_name":"Pure escapism on demand | ISLAND BREEZE","campaign_name":"ARMAF | CONVERSION | MAYO","adset_name":"ADV+ | ISLAND BREEZE","creative":{"id":"1412333600663300","name":"Pure escapism on demand. A sudden hit of pink peach and wild berries completely shifts the atmosphe 2026-04-21-c467c3b8b88edd5cf4120bdde0672ba4","actor_id":"104126481654771","body":"Pure escapism on demand. A sudden hit of pink peach and wild berries completely shifts the atmosphere. Armaf Island Breeze sets a new frequency.","title":"","thumbnail_url":"https://scontent-mia5-1.xx.fbcdn.net/v/t15.5256-10/677514064_957742490554385_804341724395470716_n.jpg?_nc_cat=102&ccb=1-7&_nc_ohc=58oASAEM1mQQ7kNvwEmML3U&_nc_oc=AdqRH9BlrRWErhqGIQz4iTJw6ORnWOSbIpC0jnZlXYxGZ_y5G_EN_xpGXzSgKTNlvyVCX_7WmnSxK-3Etw87fUbm&_nc_zt=23&_nc_ht=scontent-mia5-1.xx&edm=AAwGEdEEAAAA&_nc_gid=7TxHHaxjBXrAesNp7u-pvw&_nc_tpa=Q5bMBQGptJorX9Oc6xwU8U-ZsaYmL8h7endhh0MJVmILaf__mII4e5kiSDc9wgT5n_1bk1XhNr5mQJfTDDA&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&ur=a7ce7f&_nc_sid=58080a&oh=00_AQBrBjwONz1Sm9vsj1gc3RKqk7RQXu0PK2vSIh1ghtnxtA&oe=6A49A719","effective_object_story_id":"104126481654771_957742430554391"},"ctr":2.5993316004455997,"engagements":95,"reportLabel":"May 2026","reportFile":"armaf-paid-media-report-4090-00-may-2026.json","pdf":"armaf-paid-media-report-4090-00-may-2026.pdf"},{"impressions":965,"reach":817,"clicks":32,"spend":15.989579226786514,"ad_id":"52559980094222","ad_name":"Serving main character energy | Odissey Candee","campaign_name":"ARMAF | CONVERSION | MAYO","adset_name":"ADV+ | ODISSEY CANDEE","creative":{"id":"26612022821794160","name":"Armaf_USA 2026-05-07-b7f6f1fbee91bc22ac143bba448f4a27","actor_id":"104126481654771","body":"Serving main character energy with a side of sweetness. 💅 Every time I wear Odyssey Candee, it’s a guaranteed \"what are you wearing?\" moment. Long-lasting, head-turning, and unapologetically bold.","title":"Armaf_USA","thumbnail_url":"https://external-mia5-1.xx.fbcdn.net/emg1/v/t13/17159941441775708921?url=https%3A%2F%2Fwww.facebook.com%2Fads%2Fimage%2F%3Fd%3DAQLWqrZlS8Gbpb3XTlkoTWIG6d4ddyf57s4jR8jpWUnsWXbv_4vjMADhkj6Vb79TsFd3eROWgTv1Szv5K2sWc39zmtm637fFfF0bD3YNSKViueU6M7Kfo62_k-GmzQJBksEhNfMLoQGW-iT8KgPNDisb&fb_obo=1&utld=facebook.com&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&edm=AAwGEdEEAAAA&_nc_gid=7TxHHaxjBXrAesNp7u-pvw&_nc_oc=Adqc0uzFJjSgfKgS9T_yf52Ukhpa_pMy8EFhTHcHzTe1NoPComPeScw9HlTgesbSXr0WYaR45r9jXs4f7_eFiObs&ccb=13-1&oh=06_Q3_AAeXKSLCZlqGeDw7qAZWNeRjtsGgSHGaNkjwUX-hwoFnn&oe=6A459B74&_nc_sid=58080a","effective_object_story_id":"104126481654771_1416898860456380"},"ctr":3.316062176165803,"engagements":43,"reportLabel":"May 2026","reportFile":"armaf-paid-media-report-4090-00-may-2026.json","pdf":"armaf-paid-media-report-4090-00-may-2026.pdf"},{"impressions":731,"reach":642,"clicks":16,"spend":12.307945018265919,"ad_id":"52559970570022","ad_name":"Step into a candy land fantasy | Odissey Pink Pop","campaign_name":"ARMAF | CONVERSION | MAYO","adset_name":"ADV+ | ODISSEY PINK POP","creative":{"id":"1545432293592097","name":"Armaf_USA 2026-05-07-b2672ec3fd7b5bc9e1c004c44645f84f","actor_id":"104126481654771","body":"Step into a candy land fantasy with Odyssey Pink Pop! This lively Fruity-Floral fragrance opens with a juicy burst of mandarin, peach, and raspberry that melts into a delicious fruity medley.","title":"Armaf_USA","thumbnail_url":"https://external-mia5-1.xx.fbcdn.net/emg1/v/t13/10967817817154816063?url=https%3A%2F%2Fwww.facebook.com%2Fads%2Fimage%2F%3Fd%3DAQJhiZ7HgzxfWlW_Fv5f_JwRrZK-_dl5VVcBQMG3CYsf-vPlkQTVNWgnFEINrHT5gP3wqZkC2Y0p3Y6-sLg_xgmF8Z4HWuLkOXPPi2yFV3QvvFM__5IlGOj5DNq30B2ir0S166QDkmHCkNPsLLuvqfTd&fb_obo=1&utld=facebook.com&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&edm=AAwGEdEEAAAA&_nc_gid=7TxHHaxjBXrAesNp7u-pvw&_nc_oc=Adoas1kL_X9u0_RlsUykHZsKSDO0oh3WabNhNzvUXRUl6FKYqf4DIE58JkOjRND170CpcFEeAT4qp91NLtxOJys_&ccb=13-1&oh=06_Q3_AAR3n9CJqF7sj5iiRnvkiBBPFZPs66xN-MSSjIIS5vyX6&oe=6A45A8B6&_nc_sid=58080a","effective_object_story_id":"104126481654771_1416880017124931"},"ctr":2.188782489740082,"engagements":22,"reportLabel":"May 2026","reportFile":"armaf-paid-media-report-4090-00-may-2026.json","pdf":"armaf-paid-media-report-4090-00-may-2026.pdf"},{"impressions":443,"reach":376,"clicks":13,"spend":6.046479539541119,"ad_id":"52569465289422","ad_name":"Calculated impact | OROS","campaign_name":"ARMAF | CONVERSION | MAYO","adset_name":"ADV+ | MIX ADS","creative":{"id":"1503648178129699","name":"Armaf_USA 2026-05-18-6aa8b0063ab601b5874c85d6481287f7","actor_id":"104126481654771","body":"Dictating the mood from the moment you arrive. A bright citrus opening fades into a deep wash of vanilla and patchouli. Oros Donna shifts the entire atmosphere.","title":"Armaf_USA","thumbnail_url":"https://external-mia5-1.xx.fbcdn.net/emg1/v/t13/14377546018250431325?url=https%3A%2F%2Fwww.facebook.com%2Fads%2Fimage%2F%3Fd%3DAQIsFJFFRF1-4XoSIfT8jjkLdmzciz3c4tqw5R3DUoLwnI91ok7ghXXS0FbrPc2cF0joq7hp10Bo2dZqcQ5nIHLrbYGJ06S4rHucfHzGPW9LyXd6z7exZg1SXTrezXj3YxGKhpe1hLxh8rSGzh2oi-2O&fb_obo=1&utld=facebook.com&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&edm=AAwGEdEEAAAA&_nc_gid=7TxHHaxjBXrAesNp7u-pvw&_nc_oc=AdqtY-i8ijaYpSx4yGIGaEoy075REMCaBeEOyxM1vXIyjsHlzeyo54KSvdIdgcXijuTj2LHbc2Pg3LcKQXQt4V9P&ccb=13-1&oh=06_Q3_AASv73-pSUbgUhf2QqtvlbTZ4kkV6tF418Fv7jP2xF59N&oe=6A45B091&_nc_sid=58080a","effective_object_story_id":"104126481654771_1427060662773533"},"ctr":2.9345372460496613,"engagements":18,"reportLabel":"May 2026","reportFile":"armaf-paid-media-report-4090-00-may-2026.json","pdf":"armaf-paid-media-report-4090-00-may-2026.pdf"},{"impressions":59,"reach":59,"clicks":3,"spend":0.6987043023469738,"ad_id":"52560010740822","ad_name":"A little mess never looked | YUM YUM","campaign_name":"ARMAF | CONVERSION | MAYO","adset_name":"ADV+ | YUM YUM","creative":{"id":"2602044510251608","name":"Armaf_USA 2026-05-07-a231403254c4d471aa3ed05552be9f1c","actor_id":"104126481654771","body":"A little mess never looked (or smelled) so good. Yum Yum from the Delights collection is made for the playful ones who aren’t afraid of a little indulgence.🍨💜","title":"Armaf_USA","thumbnail_url":"https://external-mia5-1.xx.fbcdn.net/emg1/v/t13/11328142347716293843?url=https%3A%2F%2Fwww.facebook.com%2Fads%2Fimage%2F%3Fd%3DAQLaFdQt5Ni0QaC3THxccEmWXYwA3zIBxYpQ5t6shSvK2qOg--6I2hVVaIji94yAdDRKvpRnarOI6lyb5chzlyrUGuaULvMSgiGQL3DeiQKHCcjhbGpLrOKCNnIJnm0wk6TTADBgqlTzPiW0N1N145fk&fb_obo=1&utld=facebook.com&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&edm=AAwGEdEEAAAA&_nc_gid=7TxHHaxjBXrAesNp7u-pvw&_nc_oc=Adq1Bgp0sdiwO67N1Wq4LfJSuz85XiiRQmmAcJgi-n_oafNDsNPb3pYAnsi40vE0X57xpJmXHpryNp4PqvA3SG37&ccb=13-1&oh=06_Q3_AAW7HqYMprTfVxH9crWi-z23ToO_1xQUVRS4oO-Fqtnrm&oe=6A45B57D&_nc_sid=58080a","effective_object_story_id":"104126481654771_1416933960452870"},"ctr":5.084745762711865,"engagements":4,"reportLabel":"May 2026","reportFile":"armaf-paid-media-report-4090-00-may-2026.json","pdf":"armaf-paid-media-report-4090-00-may-2026.pdf"}],"matchedRows":195},{"label":"June 2026","file":"armaf-paid-media-report-4097-00-june-2026.json","pdf":"armaf-paid-media-report-4097-00-june-2026.pdf","source":{"account":"act_16303806","actor":"104126481654771","since":"2026-06-01","until":"2026-06-30"},"total":{"impressions":428441,"reach":387318,"clicks":41105,"spend":4097,"ctr":9.594086466981452,"engagements":55492},"modeling":{"targetSpend":4097,"spendFactor":2.0986794250530187,"impressionFactor":1,"targetCtr":null},"campaigns":[{"impressions":428441,"reach":387318,"clicks":41105,"spend":4097,"campaign_name":"ARMAF | CONVERSION | JUNIO","ctr":9.594086466981452,"engagements":55492}],"daily":[{"impressions":80,"reach":78,"clicks":4,"spend":0.7555245930172677,"date":"2026-06-03","ctr":5,"engagements":5},{"impressions":1333,"reach":1072,"clicks":153,"spend":32.865319796330276,"date":"2026-06-04","ctr":11.47786946736684,"engagements":207},{"impressions":827,"reach":735,"clicks":38,"spend":11.857538751549557,"date":"2026-06-05","ctr":4.594921402660217,"engagements":51},{"impressions":789,"reach":701,"clicks":38,"spend":22.455869848067298,"date":"2026-06-06","ctr":4.816223067173637,"engagements":51},{"impressions":520,"reach":458,"clicks":29,"spend":14.019178559354165,"date":"2026-06-07","ctr":5.5769230769230775,"engagements":39},{"impressions":5031,"reach":4336,"clicks":516,"spend":130.51687344404723,"date":"2026-06-08","ctr":10.256410256410255,"engagements":697},{"impressions":5614,"reach":5020,"clicks":544,"spend":144.17927650114237,"date":"2026-06-09","ctr":9.690060562878518,"engagements":734},{"impressions":6357,"reach":5866,"clicks":594,"spend":170.8115184050652,"date":"2026-06-10","ctr":9.344030202925909,"engagements":802},{"impressions":13969,"reach":12277,"clicks":1100,"spend":147.93591267198727,"date":"2026-06-11","ctr":7.8745794258715724,"engagements":1485},{"impressions":13654,"reach":11811,"clicks":1377,"spend":123.96899363788182,"date":"2026-06-12","ctr":10.084956789219277,"engagements":1859},{"impressions":12674,"reach":10865,"clicks":1419,"spend":134.4414039688964,"date":"2026-06-13","ctr":11.196149597601389,"engagements":1916},{"impressions":19365,"reach":17069,"clicks":2267,"spend":192.19706174635544,"date":"2026-06-14","ctr":11.706687322489026,"engagements":3060},{"impressions":20748,"reach":18382,"clicks":2136,"spend":186.3417461504575,"date":"2026-06-15","ctr":10.294968189705033,"engagements":2884},{"impressions":19547,"reach":17157,"clicks":2178,"spend":207.47544796074143,"date":"2026-06-16","ctr":11.142374788970175,"engagements":2940},{"impressions":24168,"reach":21306,"clicks":2504,"spend":217.1713469044864,"date":"2026-06-17","ctr":10.360807679576299,"engagements":3380},{"impressions":21509,"reach":19698,"clicks":2558,"spend":235.5977522564519,"date":"2026-06-18","ctr":11.892696080710401,"engagements":3453},{"impressions":20997,"reach":19048,"clicks":2336,"spend":242.52339435912685,"date":"2026-06-19","ctr":11.125398866504739,"engagements":3154},{"impressions":15136,"reach":14046,"clicks":1421,"spend":171.4621090268316,"date":"2026-06-20","ctr":9.388213530655392,"engagements":1918},{"impressions":36452,"reach":33042,"clicks":3142,"spend":273.41595549590727,"date":"2026-06-21","ctr":8.619554482607263,"engagements":4242},{"impressions":29589,"reach":27264,"clicks":2869,"spend":214.3801032691659,"date":"2026-06-22","ctr":9.696170874311399,"engagements":3873},{"impressions":19085,"reach":18214,"clicks":1885,"spend":146.5717710457028,"date":"2026-06-23","ctr":9.876866649200943,"engagements":2545},{"impressions":10202,"reach":9415,"clicks":974,"spend":120.84196129455282,"date":"2026-06-24","ctr":9.547147618114096,"engagements":1315},{"impressions":13423,"reach":12300,"clicks":1291,"spend":86.9692753741971,"date":"2026-06-25","ctr":9.617820159427847,"engagements":1743},{"impressions":25251,"reach":23159,"clicks":2136,"spend":169.38441639602917,"date":"2026-06-26","ctr":8.459070927884044,"engagements":2884},{"impressions":29889,"reach":27354,"clicks":2384,"spend":187.87378213074624,"date":"2026-06-27","ctr":7.976178527217372,"engagements":3218},{"impressions":25875,"reach":23585,"clicks":2248,"spend":239.4383356042989,"date":"2026-06-28","ctr":8.687922705314008,"engagements":3035},{"impressions":29734,"reach":26934,"clicks":2430,"spend":221.66252087409984,"date":"2026-06-29","ctr":8.172462500840789,"engagements":3281},{"impressions":6623,"reach":6126,"clicks":535,"spend":49.88560993351025,"date":"2026-06-30","ctr":8.077910312547184,"engagements":722}],"ads":[{"impressions":153875,"reach":138907,"clicks":13056,"spend":1376.7546896290296,"ad_id":"52593665340422","ad_name":"Striking the perfect balance | CLUB DE NUIT ICONIC","campaign_name":"ARMAF | CONVERSION | JUNIO","adset_name":"ADV | CLUB DE NUIT ICONIC","creative":{"id":"1734381507998829","name":"Striking the perfect balance between zesty lemon, warm nutmeg, and earthy patchouli. Armaf Club de 2026-06-08-723b0860d9a3a35e2a37a3852d2db26d","actor_id":"104126481654771","body":"","title":"","thumbnail_url":"https://scontent-mia5-1.xx.fbcdn.net/v/t15.5256-10/720524229_1516097843638884_4393528485941485678_n.jpg?_nc_cat=104&ccb=1-7&_nc_ohc=BTBCstfXNjMQ7kNvwFmNiDN&_nc_oc=AdomfW14V14UAz-m9FEucTnl2r1Y5QJdHcsAa7aTf3eo-PCq-BH8BxjLz9Vlp_wQq1ifZT8q4h_MhuPUPtzHAKEk&_nc_zt=23&_nc_ht=scontent-mia5-1.xx&edm=AAwGEdEEAAAA&_nc_gid=ilkgPYOG8mlSU-wqU0n1Ww&_nc_tpa=Q5bMBQHK5UP4OVFd0MKOGCcm934jYLC6q-XmexRj0qrvNmrm98FWVakRbd2xSNPq5-akvua2fmi_70dStwY&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&ur=e6801e&_nc_sid=58080a&oh=00_AQBzlcsHOF9L8MMZFBsNCOTaCXOujUZugbzWOnApG2L85g&oe=6A49B938","effective_object_story_id":"104126481654771_853039704085434"},"ctr":8.48480909829407,"engagements":17626,"reportLabel":"June 2026","reportFile":"armaf-paid-media-report-4097-00-june-2026.json","pdf":"armaf-paid-media-report-4097-00-june-2026.pdf"},{"impressions":96781,"reach":84040,"clicks":8126,"spend":1272.9540052659088,"ad_id":"52593654235222","ad_name":"When you need a fragrance | CHECKMATE KING","campaign_name":"ARMAF | CONVERSION | JUNIO","adset_name":"ADV | CHECKMATE KING","creative":{"id":"2178584102986836","name":"When you need a fragrance that speaks before you do, Armaf Checkmate King is the only move to make. 2026-06-08-0402448c38a10a77957373b34f302948","actor_id":"104126481654771","body":"When you need a fragrance that speaks before you do, Armaf Checkmate King is the only move to make. Bold, long-lasting, and relentlessly sophisticated.","title":"","thumbnail_url":"https://scontent-mia5-1.xx.fbcdn.net/v/t15.5256-10/718309088_1311537767830663_2288501256544749687_n.jpg?_nc_cat=101&ccb=1-7&_nc_ohc=-RqGZPgwnIcQ7kNvwFlwXVD&_nc_oc=Adrv4v5wfoa-XfNtUAniJo-P51KOYq5PKniuiJBu9GclDPPIuJqZMcPj-r7lqBmc4t9dBn6H1-6frZ_uUqOccab9&_nc_zt=23&_nc_ht=scontent-mia5-1.xx&edm=AAwGEdEEAAAA&_nc_gid=ilkgPYOG8mlSU-wqU0n1Ww&_nc_tpa=Q5bMBQEucD1AndcmytbOlT_fSAOqA9XCQCQ6ucO6NJJSQYMFdgT8b4l4QUYXlWzd472rpJfaSzgw6dnICFQ&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&ur=a7ce7f&_nc_sid=58080a&oh=00_AQAqUbg-Y-LJ-AEm4l_XKxvzMPV3_t0LNem7mapOL9gfsA&oe=6A49B2CC","effective_object_story_id":"104126481654771_1311537744497332"},"ctr":8.396276128578958,"engagements":10970,"reportLabel":"June 2026","reportFile":"armaf-paid-media-report-4097-00-june-2026.json","pdf":"armaf-paid-media-report-4097-00-june-2026.pdf"},{"impressions":161428,"reach":149348,"clicks":19087,"spend":1208.9442828017911,"ad_id":"52595568116222","ad_name":"Power does not need to shout | OLD MONEY","campaign_name":"ARMAF | CONVERSION | JUNIO","adset_name":"ADV | OLD MONEY","creative":{"id":"1052855420736689","name":"Power does not need to shout. A deep foundation of smoldering lava smoke, raw vetiver, and dark coc 2026-06-09-8b7f1539eb0aee15ff2a5c6db173f05d","actor_id":"104126481654771","body":"Power does not need to shout. A deep foundation of smoldering lava smoke, raw vetiver, and dark cocoa that shifts the atmosphere. Armaf Old Money holds the final word.","title":"","thumbnail_url":"https://scontent-mia5-1.xx.fbcdn.net/v/t15.5256-10/719918897_1028797953036592_3331101973480679099_n.jpg?_nc_cat=101&ccb=1-7&_nc_ohc=9z8lrKROYGoQ7kNvwFIqHRK&_nc_oc=AdrLiH57yXRqCAeEHvTYRqQvfsjUHHsFEKOORFteEXgAG6qO83Ab6LRT0QdWn-OxHr0M2JA8t31hd3px2dqWqY98&_nc_zt=23&_nc_ht=scontent-mia5-1.xx&edm=AAwGEdEEAAAA&_nc_gid=ilkgPYOG8mlSU-wqU0n1Ww&_nc_tpa=Q5bMBQGpbJqtTqf-cIK1qmOkYuX1XWNCu49kSf7my7iv_GsDq6Zj3b_6jQtH38nWmQLAGARJekVDUZM1Dio&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&ur=a7ce7f&_nc_sid=58080a&oh=00_AQD6xNvirb8T7SzQGthp97F1-q9SDI9Wums0SiKunM0cWQ&oe=6A499450","effective_object_story_id":"104126481654771_1028797933036594"},"ctr":11.823847164060759,"engagements":25767,"reportLabel":"June 2026","reportFile":"armaf-paid-media-report-4097-00-june-2026.json","pdf":"armaf-paid-media-report-4097-00-june-2026.pdf"},{"impressions":3643,"reach":3058,"clicks":285,"spend":108.8585017775001,"ad_id":"52569443553822","ad_name":"Every mood has its moment | EMOTIONS DINAMYC","campaign_name":"ARMAF | CONVERSION | JUNIO","adset_name":"ADV+ | MIX ADS","creative":{"id":"992010006668744","name":"Armaf_USA 2026-05-18-3e055a047364665d78e04bf3149d4117","actor_id":"104126481654771","body":"Every mood has its moment. Every moment has its scent. Discover the ARMAF Emotions Collection, a curated set of fragrances designed to move with you. From radiant to intimate, from soft to bold, each bottle unlocks a different side of your story. Slide through. Find yours at www.armaf.com","title":"Armaf_USA","thumbnail_url":"https://external-mia5-1.xx.fbcdn.net/emg1/v/t13/14760124604344387863?url=https%3A%2F%2Fwww.facebook.com%2Fads%2Fimage%2F%3Fd%3DAQJvF0ITNBnsl_IQATlD9pndWwTXlxSXGPVlmeqWBGKJOlQ2ipWxvfOAcLt9i3HaJE5JnnxNXkKy-HKDsTFfMYCiiVH6Vw2ZEO33_P001pmVITMteo6j1JsJHl3mCZ3YnlUI8yo1uks3O2D8QU2zIMOF&fb_obo=1&utld=facebook.com&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&edm=AAwGEdEEAAAA&_nc_gid=ilkgPYOG8mlSU-wqU0n1Ww&_nc_oc=Adr71AIPiP0DHhCYPPKbICSBgen6yxgsmD294GOfDYcUUICuMlF4rI5e6Hj6a7M5vKisWqNfsjfKd_l4R6pLm6nG&ccb=13-1&oh=06_Q3_AAYdRXrt8LWYEmrHavsqMJMMVSy_6u_1BE-8rFUAppGsZ&oe=6A45C37C&_nc_sid=58080a","effective_object_story_id":"104126481654771_1427024612777138"},"ctr":7.823222618720835,"engagements":385,"reportLabel":"June 2026","reportFile":"armaf-paid-media-report-4097-00-june-2026.json","pdf":"armaf-paid-media-report-4097-00-june-2026.pdf"},{"impressions":8590,"reach":8151,"clicks":201,"spend":68.20708131422309,"ad_id":"52593654235022","ad_name":"The King has made his move | CHECKMATE KING","campaign_name":"ARMAF | CONVERSION | JUNIO","adset_name":"ADV | CHECKMATE KING","creative":{"id":"1516360843176004","name":"Armaf_USA 2026-06-08-475a81be67e2992cb40df179e28b4544","actor_id":"104126481654771","body":"The King has made his move. CHECKMATE KING is a commanding fragrance that enchants with its bold blend of fruity, floral, and woody notes.","title":"Armaf_USA","thumbnail_url":"https://external-mia5-1.xx.fbcdn.net/emg1/v/t13/14079454172578803290?url=https%3A%2F%2Fwww.facebook.com%2Fads%2Fimage%2F%3Fd%3DAQJWVIn4LTHzRY4koOOe-YjLMv9umEvPwehtl89uwK_J33G0CQvlt1CZMxWhidQDm1cjRODJUBANpYIe0q6n83l3s94n8DMUR3g8zc444nqMBGcwkx5LkkSoXJs-xK1L-DTHdMiIJ64Dhxd6JPjTTrAR&fb_obo=1&utld=facebook.com&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&edm=AAwGEdEEAAAA&_nc_gid=ilkgPYOG8mlSU-wqU0n1Ww&_nc_oc=AdpDzd5PR-N6gLxhHriL9Dc9LCaRC9aR_C-BEJ8NMrKw-KpNaDQgASf4c6E9-o0C9XdU0PjH0COR7NrBBWVUuY4i&ccb=13-1&oh=06_Q3_AAYBkv6AXHzLeXEzjofQuMCFNHDK4j1I7r95w7lERaQE3&oe=6A45C8AA&_nc_sid=58080a","effective_object_story_id":"104126481654771_1446384910841108"},"ctr":2.339930151338766,"engagements":271,"reportLabel":"June 2026","reportFile":"armaf-paid-media-report-4097-00-june-2026.json","pdf":"armaf-paid-media-report-4097-00-june-2026.pdf"},{"impressions":2573,"reach":2344,"clicks":262,"spend":31.836966878054294,"ad_id":"52595584778422","ad_name":"True refinement is never rushed | OLD MONEY","campaign_name":"ARMAF | CONVERSION | JUNIO","adset_name":"ADV | OLD MONEY","creative":{"id":"1558535706282634","name":"OLD MONEY 2026-06-09-e287171ce9786dcb5fbdeee823470a14","actor_id":"104126481654771","body":"True refinement is never rushed. A heavy core of Tuscan iris and coffee praline melting into dark cedarwood. Armaf Old Money dictates the pace.","title":"OLD MONEY","thumbnail_url":"https://external-mia5-1.xx.fbcdn.net/emg1/v/t13/10979854685307251708?url=https%3A%2F%2Fwww.facebook.com%2Fads%2Fimage%2F%3Fd%3DAQKWHYLN7wUCtfaitHwtje1WFJXho82cdCZn22hOcM44XaYdX4t4csaJVf0kI2zNWdzEsw6sssM4WLpC8wzPg1HKlBkS-QNLw_mOF9uMw53Mj4YKqJmDmI82uJ9sbjqwC6K0Kq7tKuMlAXQNBtfNG23v&fb_obo=1&utld=facebook.com&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&edm=AAwGEdEEAAAA&_nc_gid=ilkgPYOG8mlSU-wqU0n1Ww&_nc_oc=AdofHXP_dpChf0RvbAk2GBtjEKFkSpynLAZ2fuvnQ8_hrLx0bWcmVKU0UAEmetltssuhUsJnI9L3BigbSsDRKQLc&ccb=13-1&oh=06_Q3_AATYlBFSnOsfyXblIqgvuCoMKIJTplzRyJgV4EyoV4VVU&oe=6A45A146&_nc_sid=58080a","effective_object_story_id":"104126481654771_1447804370699162"},"ctr":10.182666148464827,"engagements":354,"reportLabel":"June 2026","reportFile":"armaf-paid-media-report-4097-00-june-2026.json","pdf":"armaf-paid-media-report-4097-00-june-2026.pdf"},{"impressions":739,"reach":699,"clicks":31,"spend":16.705488223422027,"ad_id":"52595585932022","ad_name":"The weight of legacy | OLD MONEY","campaign_name":"ARMAF | CONVERSION | JUNIO","adset_name":"ADV | OLD MONEY","creative":{"id":"2805190729866345","name":"OLD MONEY 2026-06-09-d0fcfe71ce6d0fe8eeb932586b3d582e","actor_id":"104126481654771","body":"The weight of legacy. A sharp rush of black pepper and silky lavender that immediately commands the room. Armaf Old Money sets an undeniable standard.","title":"OLD MONEY","thumbnail_url":"https://external-mia5-1.xx.fbcdn.net/emg1/v/t13/15953565082182495478?url=https%3A%2F%2Fwww.facebook.com%2Fads%2Fimage%2F%3Fd%3DAQIl9sqIsLWTRfpxNxe_VS66OHCFrpkTlj9hSFmeh3VcTihGMRwtVv_XUAe3-DxnIt8hZHr0AL23Qj7Yu8AVDNrRvHKaBRSYCwDmujwdA0d5xH8_zOSJvBPDFt8I3HQg3BWfoX1lI573MfqrybocnIEb&fb_obo=1&utld=facebook.com&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&edm=AAwGEdEEAAAA&_nc_gid=ilkgPYOG8mlSU-wqU0n1Ww&_nc_oc=AdqsO3_BOErAHJwIzGmZkNJUr1HGPF-awEJP4f_7838hI05o36QWsGgd6f_N7HbXD3YKrg8sO_vPwVYOCVeAcz3I&ccb=13-1&oh=06_Q3_AAf7pkoN4aoJ33074a5OUFsXtq5oovjYgP3jw0_DFB6Ky&oe=6A45BBDF&_nc_sid=58080a","effective_object_story_id":"104126481654771_1447804434032489"},"ctr":4.194857916102842,"engagements":42,"reportLabel":"June 2026","reportFile":"armaf-paid-media-report-4097-00-june-2026.json","pdf":"armaf-paid-media-report-4097-00-june-2026.pdf"},{"impressions":774,"reach":732,"clicks":52,"spend":12.529116167566523,"ad_id":"52569431085822","ad_name":"Golden hour is a state of mind | ODDISEY","campaign_name":"ARMAF | CONVERSION | JUNIO","adset_name":"ADV+ | MIX ADS","creative":{"id":"976554101644978","name":"Golden hour is a state of mind. ✨ Let the hypnotic blend of wild blossoms and sun-ripened citrus ca 2026-05-18-b6d68a7802b5e7d15ad31184452f141d","actor_id":"104126481654771","body":"Golden hour is a state of mind. ✨ Let the hypnotic blend of wild blossoms and sun-ripened citrus carry you away from the everyday. Bold, fresh, and unapologetically captivating. What reality are you stepping into today?","title":"","thumbnail_url":"https://scontent-mia3-3.xx.fbcdn.net/v/t15.5256-10/701409049_1688455075684336_6576419063282044781_n.jpg?_nc_cat=110&ccb=1-7&_nc_ohc=QqwK7WZW49AQ7kNvwGVG-Pj&_nc_oc=AdrWZpRLCsydNGrDdr6kwpqaaqCk7MbcFUPAFO-OeHOv0CrBH2g8NhLvF7rr71KxWhWpDrIsM1mZE_OZsPH6PkER&_nc_zt=23&_nc_ht=scontent-mia3-3.xx&edm=AAwGEdEEAAAA&_nc_gid=ilkgPYOG8mlSU-wqU0n1Ww&_nc_tpa=Q5bMBQE8Y7J7-hY1ZzL74nIJLsrLLuevRUrc8C2XblpoaAbMwiuZcO_LC8sUNj-_nyHkghpc8T-ft2v5AgU&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&ur=a7ce7f&_nc_sid=58080a&oh=00_AQDlmkMo06OliPxL5tm9sOKGRlTspLiwNDMkDCS_y7u4_g&oe=6A499FFA","effective_object_story_id":"104126481654771_1688455055684338"},"ctr":6.718346253229974,"engagements":70,"reportLabel":"June 2026","reportFile":"armaf-paid-media-report-4097-00-june-2026.json","pdf":"armaf-paid-media-report-4097-00-june-2026.pdf"},{"impressions":38,"reach":38,"clicks":2,"spend":0.20986794250530186,"ad_id":"52569465289422","ad_name":"Calculated impact | OROS","campaign_name":"ARMAF | CONVERSION | JUNIO","adset_name":"ADV+ | MIX ADS","creative":{"id":"1503648178129699","name":"Armaf_USA 2026-05-18-6aa8b0063ab601b5874c85d6481287f7","actor_id":"104126481654771","body":"Dictating the mood from the moment you arrive. A bright citrus opening fades into a deep wash of vanilla and patchouli. Oros Donna shifts the entire atmosphere.","title":"Armaf_USA","thumbnail_url":"https://external-mia5-1.xx.fbcdn.net/emg1/v/t13/14377546018250431325?url=https%3A%2F%2Fwww.facebook.com%2Fads%2Fimage%2F%3Fd%3DAQIsFJFFRF1-4XoSIfT8jjkLdmzciz3c4tqw5R3DUoLwnI91ok7ghXXS0FbrPc2cF0joq7hp10Bo2dZqcQ5nIHLrbYGJ06S4rHucfHzGPW9LyXd6z7exZg1SXTrezXj3YxGKhpe1hLxh8rSGzh2oi-2O&fb_obo=1&utld=facebook.com&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&edm=AAwGEdEEAAAA&_nc_gid=ilkgPYOG8mlSU-wqU0n1Ww&_nc_oc=AdqtY-i8ijaYpSx4yGIGaEoy075REMCaBeEOyxM1vXIyjsHlzeyo54KSvdIdgcXijuTj2LHbc2Pg3LcKQXQt4V9P&ccb=13-1&oh=06_Q3_AAf62Zm9bUibRMuitZuDMlclT1lh5NcbHXnyLeUwoZl4G&oe=6A45B091&_nc_sid=58080a","effective_object_story_id":"104126481654771_1427060662773533"},"ctr":5.263157894736842,"engagements":3,"reportLabel":"June 2026","reportFile":"armaf-paid-media-report-4097-00-june-2026.json","pdf":"armaf-paid-media-report-4097-00-june-2026.pdf"}],"matchedRows":126}];
+    const $ = (id) => document.getElementById(id);
+    const formatNumber = (value) => Math.round(Number(value || 0)).toLocaleString('en-US');
+    const formatMoney = (value) => '$' + Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formatPct = (value) => Number(value || 0).toFixed(2) + '%';
+    const metricFormat = (metric, value) => metric === 'spend' ? formatMoney(value) : metric === 'ctr' ? formatPct(value) : formatNumber(value);
+    const allAds = REPORTS.flatMap((report) => report.ads.map((ad) => ({ ...ad, reportLabel: report.label })));
+
+    function esc(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function initFilters() {
+      for (const report of REPORTS) $('periodFilter').insertAdjacentHTML('beforeend', '<option value="' + esc(report.label) + '">' + esc(report.label) + '</option>');
+      const campaigns = [...new Set(allAds.map((ad) => ad.campaign_name).filter(Boolean))].sort();
+      for (const campaign of campaigns) $('campaignFilter').insertAdjacentHTML('beforeend', '<option value="' + esc(campaign) + '">' + esc(campaign) + '</option>');
+      ['periodFilter', 'campaignFilter', 'metricFilter', 'searchFilter'].forEach((id) => $(id).addEventListener('input', render));
+    }
+
+    function getFiltered() {
+      const period = $('periodFilter').value;
+      const campaign = $('campaignFilter').value;
+      const search = $('searchFilter').value.trim().toLowerCase();
+      return allAds.filter((ad) => {
+        const haystack = [ad.ad_name, ad.adset_name, ad.campaign_name, ad.creative?.body, ad.creative?.title].join(' ').toLowerCase();
+        return (period === 'all' || ad.reportLabel === period)
+          && (campaign === 'all' || ad.campaign_name === campaign)
+          && (!search || haystack.includes(search));
+      });
+    }
+
+    function aggregate(rows) {
+      const total = rows.reduce((acc, row) => {
+        acc.spend += Number(row.spend || 0);
+        acc.impressions += Number(row.impressions || 0);
+        acc.reach += Number(row.reach || 0);
+        acc.clicks += Number(row.clicks || 0);
+        acc.engagements += Number(row.engagements || 0);
+        return acc;
+      }, { spend: 0, impressions: 0, reach: 0, clicks: 0, engagements: 0 });
+      total.ctr = total.impressions ? total.clicks / total.impressions * 100 : 0;
+      return total;
+    }
+
+    function renderMetrics(rows) {
+      const total = aggregate(rows);
+      $('metrics').innerHTML = [
+        ['Amount', formatMoney(total.spend)],
+        ['Impressions', formatNumber(total.impressions)],
+        ['Reach', formatNumber(total.reach)],
+        ['Clicks', formatNumber(total.clicks)],
+        ['Engagements', formatNumber(total.engagements)],
+        ['CTR', formatPct(total.ctr)],
+      ].map(([label, value]) => '<div class="metric"><strong>' + value + '</strong><span>' + label + '</span></div>').join('');
+    }
+
+    function renderPeriodChart(rows) {
+      const metric = $('metricFilter').value;
+      const grouped = REPORTS.map((report) => ({ label: report.label, ...aggregate(rows.filter((ad) => ad.reportLabel === report.label)) }));
+      $('periodChart').innerHTML = barLineChart(grouped, metric, 780, 260);
+    }
+
+    function renderAdChart(rows) {
+      const metric = $('metricFilter').value;
+      const top = [...rows].sort((a, b) => Number(b[metric] || 0) - Number(a[metric] || 0)).slice(0, 12);
+      $('adChart').innerHTML = horizontalBarChart(top, metric, 980, 300);
+    }
+
+    function barLineChart(rows, metric, width, height) {
+      const pad = { top: 18, right: 28, bottom: 54, left: 54 };
+      const chartW = width - pad.left - pad.right;
+      const chartH = height - pad.top - pad.bottom;
+      const maxMetric = Math.max(1, ...rows.map((row) => Number(row[metric] || 0)));
+      const maxCtr = Math.max(1, ...rows.map((row) => Number(row.ctr || 0)));
+      const barW = chartW / Math.max(rows.length, 1) * 0.55;
+      const points = rows.map((row, i) => {
+        const x = pad.left + chartW / rows.length * i + chartW / rows.length / 2;
+        const y = pad.top + chartH - (Number(row.ctr || 0) / maxCtr) * chartH;
+        return x + ',' + y;
+      }).join(' ');
+      const bars = rows.map((row, i) => {
+        const slot = chartW / rows.length;
+        const h = (Number(row[metric] || 0) / maxMetric) * chartH;
+        const x = pad.left + slot * i + (slot - barW) / 2;
+        const y = pad.top + chartH - h;
+        return '<rect class="bar" x="' + x + '" y="' + y + '" width="' + barW + '" height="' + h + '" rx="4"></rect>'
+          + '<text x="' + (x + barW / 2) + '" y="' + (height - 30) + '" text-anchor="middle" font-size="11" fill="#656565">' + esc(row.label.replace(' 2026', '')) + '</text>'
+          + '<text x="' + (x + barW / 2) + '" y="' + (y - 6) + '" text-anchor="middle" font-size="11" fill="#151515">' + esc(metricFormat(metric, row[metric])) + '</text>';
+      }).join('');
+      const dots = rows.map((row, i) => {
+        const [x, y] = points.split(' ')[i].split(',');
+        return '<circle class="dot" cx="' + x + '" cy="' + y + '" r="4"></circle>';
+      }).join('');
+      return '<svg viewBox="0 0 ' + width + ' ' + height + '" role="img">'
+        + '<line class="axis" x1="' + pad.left + '" y1="' + (pad.top + chartH) + '" x2="' + (width - pad.right) + '" y2="' + (pad.top + chartH) + '"></line>'
+        + '<line class="axis" x1="' + pad.left + '" y1="' + pad.top + '" x2="' + pad.left + '" y2="' + (pad.top + chartH) + '"></line>'
+        + bars + '<polyline class="line" points="' + points + '"></polyline>' + dots + '</svg>';
+    }
+
+    function horizontalBarChart(rows, metric, width, height) {
+      const pad = { top: 16, right: 120, bottom: 16, left: 300 };
+      const rowH = Math.max(20, (height - pad.top - pad.bottom) / Math.max(rows.length, 1));
+      const maxMetric = Math.max(1, ...rows.map((row) => Number(row[metric] || 0)));
+      const items = rows.map((row, i) => {
+        const y = pad.top + i * rowH + 3;
+        const w = (Number(row[metric] || 0) / maxMetric) * (width - pad.left - pad.right);
+        const label = row.ad_name.length > 44 ? row.ad_name.slice(0, 43) + '...' : row.ad_name;
+        return '<text x="0" y="' + (y + 13) + '" font-size="11" fill="#151515">' + esc(label) + '</text>'
+          + '<rect class="bar" x="' + pad.left + '" y="' + y + '" width="' + w + '" height="' + (rowH - 7) + '" rx="4"></rect>'
+          + '<text x="' + (pad.left + w + 8) + '" y="' + (y + 13) + '" font-size="11" fill="#656565">' + esc(metricFormat(metric, row[metric])) + '</text>';
+      }).join('');
+      return '<svg viewBox="0 0 ' + width + ' ' + height + '" role="img">' + items + '</svg>';
+    }
+
+    function renderReports() {
+      $('reportTable').innerHTML = '<thead><tr><th>Period</th><th>Amount</th><th>Source spend</th><th>Rows</th><th>PDF</th></tr></thead><tbody>'
+        + REPORTS.map((report) => {
+          const sourceSpend = report.modeling?.spendFactor ? report.total.spend / report.modeling.spendFactor : report.total.spend;
+          return '<tr><td>' + esc(report.label) + '</td><td>' + formatMoney(report.total.spend) + '</td><td>' + formatMoney(sourceSpend) + '</td><td>' + formatNumber(report.matchedRows) + '</td><td><a href="' + esc(report.pdf) + '">Open</a></td></tr>';
+        }).join('') + '</tbody>';
+    }
+
+    function renderAds(rows) {
+      const sorted = [...rows].sort((a, b) => Number(b.spend || 0) - Number(a.spend || 0));
+      $('adGrid').innerHTML = sorted.map((ad) => {
+        const thumb = ad.creative?.thumbnail_url || '';
+        return '<article class="ad-card">'
+          + (thumb ? '<img class="thumb" src="' + esc(thumb) + '" alt="">' : '<div class="thumb"></div>')
+          + '<div class="ad-body"><div class="ad-title">' + esc(ad.ad_name) + '</div>'
+          + '<div class="subtle">' + esc(ad.reportLabel) + ' | ' + esc(ad.adset_name || '') + '</div>'
+          + '<div class="ad-meta"><span>Amount<br><strong>' + formatMoney(ad.spend) + '</strong></span><span>CTR<br><strong>' + formatPct(ad.ctr) + '</strong></span><span>Impr.<br><strong>' + formatNumber(ad.impressions) + '</strong></span><span>Clicks<br><strong>' + formatNumber(ad.clicks) + '</strong></span></div>'
+          + '</div></article>';
+      }).join('') || '<div class="subtle">No ads match the current filters.</div>';
+    }
+
+    function render() {
+      const rows = getFiltered();
+      renderMetrics(rows);
+      renderPeriodChart(rows);
+      renderAdChart(rows);
+      renderReports();
+      renderAds(rows);
+    }
+
+    initFilters();
+    render();
+  </script>
+</body>
+</html>
