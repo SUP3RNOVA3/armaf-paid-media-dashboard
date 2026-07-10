@@ -208,7 +208,15 @@ function AdImage({ ad }) {
       </div>
     );
   }
-  return <Image src={ad.image} alt="" fill sizes="(max-width: 760px) 100vw, 260px" unoptimized />;
+  const imageClass = ad.imageQuality === 'high' ? 'image-high' : 'image-standard';
+  return (
+    <>
+      {ad.imageQuality !== 'high' && (
+        <Image className="thumb-bg" src={ad.image} alt="" fill sizes="(max-width: 760px) 100vw, 260px" unoptimized />
+      )}
+      <Image className={`thumb-img ${imageClass}`} src={ad.image} alt="" fill sizes="(max-width: 760px) 100vw, 260px" unoptimized />
+    </>
+  );
 }
 
 export default function Dashboard({ initialSnapshot }) {

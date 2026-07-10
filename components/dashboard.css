@@ -344,8 +344,34 @@
   object-fit: contain;
 }
 
+.thumb .thumb-bg {
+  object-fit: cover;
+  filter: blur(18px) saturate(0.95);
+  opacity: 0.54;
+  transform: scale(1.16);
+}
+
+.modal-image .thumb-bg {
+  display: none;
+}
+
+.thumb .thumb-img {
+  z-index: 1;
+}
+
+.thumb .image-high {
+  object-fit: contain;
+}
+
+.thumb .image-standard {
+  object-fit: contain;
+  padding: 18px;
+  filter: contrast(1.04) saturate(0.98);
+}
+
 .thumb > span {
   position: absolute;
+  z-index: 2;
   right: 8px;
   bottom: 8px;
   border-radius: 999px;

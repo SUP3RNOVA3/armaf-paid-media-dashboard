@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "snapshot": "node scripts/create-snapshot.mjs",
+    "images:normalize": "node scripts/normalize-images.mjs",
     "seed:supabase": "node scripts/seed-supabase.mjs"
   },
   "dependencies": {
