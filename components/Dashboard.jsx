@@ -226,7 +226,7 @@ export default function Dashboard({ initialSnapshot }) {
 
   return <main className="dashboard">
     <header className="masthead">
-      <div className="brand-lockup"><Image src="https://www.ninurtacr.com/cdn/shop/collections/Banner-Logo-Armaf.jpg" alt="ARMAF" width={110} height={20} unoptimized priority /><i /> <small>USA · PERFORMANCE INTELLIGENCE</small></div>
+      <div className="brand-lockup"><Image className="brand-logo" src="/armaf-logo.jpg" alt="ARMAF" width={1280} height={369} priority /><i /> <small>USA · PERFORMANCE INTELLIGENCE</small></div>
       <div className="data-status-stack"><div className="data-status"><span className="live-dot" /> Meta connected <b>LIVE</b></div><div className="data-status"><span className="live-dot" /> Google connected <b>LIVE</b></div></div>
     </header>
 
