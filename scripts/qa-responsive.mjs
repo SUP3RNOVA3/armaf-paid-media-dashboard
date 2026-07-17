@@ -49,7 +49,7 @@ for (const width of widths) {
       selected: document.querySelector('[role="tab"][aria-selected="true"]')?.textContent.trim(),
       scrollWidth: document.documentElement.scrollWidth,
       clientWidth: document.documentElement.clientWidth,
-      demoVisible: Boolean([...document.querySelectorAll('*')].find((item) => item.textContent?.trim() === 'PLACEHOLDER · AWAITING CONNECTION')),
+      demoVisible: Boolean([...document.querySelectorAll('*')].find((item) => item.textContent?.trim() === 'SAMPLE MODEL · MAY–JUNE 2026')),
       paidTotals: [...document.querySelectorAll('.paid-metrics strong')].map((item) => item.textContent.trim()),
       images: (() => { const images = [...document.images]; return { count: images.length, loaded: images.filter((image) => image.complete && image.naturalWidth > 0).length }; })(),
       sections: {

@@ -188,6 +188,7 @@ function organicSnapshot() {
       id: item.id,
       caption: item.caption || '',
       type: item.media_product_type || item.media_type || 'POST',
+      format: item.media_type || 'POST',
       date: item.date,
       month: item.month,
       permalink: item.permalink || '',
@@ -225,6 +226,7 @@ function organicSnapshot() {
       acc.fb_clicks = (acc.fb_clicks || 0) + Number(row.fb_clicks || 0);
       return acc;
     }, {}),
+    media,
     topContent
   };
 }
@@ -246,11 +248,26 @@ const snapshot = {
   ads,
   organicData: organicSnapshot(),
   googleAds: {
-    status: 'placeholder',
-    label: 'Awaiting Google Ads connection',
+    status: 'sample',
+    label: 'Illustrative campaign model',
     channel: 'Display / Banner',
-    demoMetrics: { impressions: 1840000, viewableRate: 71.2, clicks: 6840, ctr: 0.37, cpm: 4.82 },
-    disclaimer: 'Illustrative placeholder values only. Not included in any live totals or comparisons.'
+    periodStart: '2026-05-01',
+    periodEnd: '2026-06-30',
+    campaigns: [
+      { id: 'g-may-odyssey', month: '2026-05', name: 'ARMAF | DISPLAY | MAYO | ODYSSEY', theme: 'Odyssey', spend: 4680, impressions: 982400, clicks: 4821, conversions: 164, viewableRate: 72.8, sizes: ['300×250', '728×90', '160×600'] },
+      { id: 'g-may-island', month: '2026-05', name: 'ARMAF | DISPLAY | MAYO | ISLAND BREEZE', theme: 'Island Breeze', spend: 3920, impressions: 846700, clicks: 3556, conversions: 119, viewableRate: 69.4, sizes: ['300×250', '320×50', '728×90'] },
+      { id: 'g-may-yum', month: '2026-05', name: 'ARMAF | DISPLAY | MAYO | YUM YUM', theme: 'Yum Yum', spend: 3210, impressions: 691300, clicks: 3180, conversions: 108, viewableRate: 74.1, sizes: ['300×250', '160×600', '320×50'] },
+      { id: 'g-jun-iconic', month: '2026-06', name: 'ARMAF | DISPLAY | JUNIO | CLUB DE NUIT ICONIC', theme: 'Club de Nuit Iconic', spend: 5180, impressions: 1086200, clicks: 5647, conversions: 201, viewableRate: 76.5, sizes: ['300×250', '728×90', '160×600'] },
+      { id: 'g-jun-checkmate', month: '2026-06', name: 'ARMAF | DISPLAY | JUNIO | CHECKMATE KING', theme: 'Checkmate King', spend: 4360, impressions: 913500, clicks: 4476, conversions: 153, viewableRate: 73.2, sizes: ['300×250', '320×50', '728×90'] },
+      { id: 'g-jun-old-money', month: '2026-06', name: 'ARMAF | DISPLAY | JUNIO | OLD MONEY', theme: 'Old Money', spend: 3970, impressions: 818900, clicks: 3767, conversions: 132, viewableRate: 71.7, sizes: ['300×250', '160×600', '320×50'] }
+    ],
+    sizeBenchmarks: [
+      { size: '300×250', share: 38, ctr: 0.55, viewableRate: 76.4 },
+      { size: '728×90', share: 24, ctr: 0.41, viewableRate: 73.8 },
+      { size: '160×600', share: 21, ctr: 0.47, viewableRate: 70.2 },
+      { size: '320×50', share: 17, ctr: 0.36, viewableRate: 68.9 }
+    ],
+    disclaimer: 'Sample campaigns and illustrative metrics for May and June 2026 only. Excluded from every live Meta and executive total.'
   }
 };
 
