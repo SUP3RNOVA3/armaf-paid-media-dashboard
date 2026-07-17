@@ -8,6 +8,7 @@ const assetDir = path.join(root, 'public/assets/ad-images');
 const organicSourceFile = process.env.ARMAF_ORGANIC_FILE || '/root/.openclaw/workspace/projects/armaf/organic-meta-report/armaf-organic-meta-data.json';
 const organicMediaSource = path.join(path.dirname(organicSourceFile), 'media');
 const organicMediaOut = path.join(root, 'public/assets/organic');
+const organicThumbOut = path.join(root, 'public/assets/organic-thumbs');
 
 const reports = [
   {
@@ -193,6 +194,7 @@ function organicSnapshot() {
       month: item.month,
       permalink: item.permalink || '',
       image: localFiles.has(filename) ? `/assets/organic/${filename}` : '',
+      thumbnail: fs.existsSync(path.join(organicThumbOut, `ig-${item.id}.webp`)) ? `/assets/organic-thumbs/ig-${item.id}.webp` : '',
       reach: Number(item.insights?.reach || 0),
       views: Number(item.insights?.views || 0),
       likes: Number(item.insights?.likes || item.like_count || 0),

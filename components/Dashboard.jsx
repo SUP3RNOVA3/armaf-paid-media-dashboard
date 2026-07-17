@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { compact, integer, money, percent } from '@/lib/format';
 import './dashboard.css';
+import './ledger.css';
 
 const paidMetrics = [
   ['spend', 'Media investment', money], ['impressions', 'Paid impressions', integer],
@@ -149,6 +150,13 @@ function OrganicCreative({ post }) {
   </a>;
 }
 
+function OrganicPostCell({ post }) {
+  return <td><a className="organic-ledger-post" href={post.permalink} target="_blank">
+    <span className="organic-ledger-thumb">{post.thumbnail ? <Image src={post.thumbnail} alt="" fill unoptimized sizes="48px" /> : <ImageIcon size={16} />}</span>
+    <span><strong>{post.caption || 'Armaf organic post'}</strong><small>{post.date}</small></span>
+  </a></td>;
+}
+
 export default function Dashboard({ initialSnapshot }) {
   const [channel, setChannel] = useState('intelligence');
   const [period, setPeriod] = useState('all');
@@ -232,7 +240,7 @@ export default function Dashboard({ initialSnapshot }) {
       <section className="efficiency-strip"><div><span>EFFICIENCY INDEX</span><strong>{delta(organic.comparison.metrics.total_engagement.lift)}</strong><p>Monthly content engagement lift while publishing cadence moved only {delta(organic.comparison.metrics.total_posts.lift)}. The gain is efficiency-led, not volume-led.</p></div><div><span>ENGAGEMENT / POST</span><strong>{delta(((organic.comparison.metrics.total_engagement.after / organic.comparison.metrics.total_posts.after) / (organic.comparison.metrics.total_engagement.before / organic.comparison.metrics.total_posts.before) - 1) * 100)}</strong><p>Derived from normalized monthly engagement divided by monthly post volume.</p></div></section>
       <section className="section-title compact-title"><div><span>02 · Organic creative</span><h2>Content that moved people</h2></div><p>Ranked by lifetime interactions for media published during the reporting period.</p></section>
       <section className="organic-grid">{(channel === 'organic' ? organicMedia.filter((post) => post.image).slice(0, 12) : organic.topContent.slice(0, 6)).map((post) => <OrganicCreative key={post.id} post={post} />)}</section>
-      {channel === 'organic' && <section className="panel organic-table-panel"><div className="panel-head"><div><span>CONTENT PERFORMANCE LEDGER</span><h3>Every matching Instagram post</h3></div><small>{organicMedia.length} rows · selected scope</small></div><div className="data-table-wrap"><table className="data-table"><thead><tr><th>Published content</th><th>Format</th><th>Reach</th><th>Views</th><th>Interactions</th><th>ER</th><th>Saves</th><th>Shares</th></tr></thead><tbody>{organicMedia.slice(0, 50).map((post) => <tr key={post.id}><td><a href={post.permalink} target="_blank"><strong>{post.caption || 'Armaf organic post'}</strong><small>{post.date}</small></a></td><td>{post.type}</td><td>{integer(post.reach)}</td><td>{integer(post.views)}</td><td>{integer(post.interactions)}</td><td>{percent(post.engagementRate)}</td><td>{integer(post.saves)}</td><td>{integer(post.shares)}</td></tr>)}</tbody></table></div></section>}
+      {channel === 'organic' && <section className="panel organic-table-panel"><div className="panel-head"><div><span>CONTENT PERFORMANCE LEDGER</span><h3>Every matching Instagram post</h3></div><small>{organicMedia.length} rows · selected scope</small></div><div className="data-table-wrap"><table className="data-table"><thead><tr><th>Published content</th><th>Format</th><th>Reach</th><th>Views</th><th>Interactions</th><th>ER</th><th>Saves</th><th>Shares</th></tr></thead><tbody>{organicMedia.slice(0, 50).map((post) => <tr key={post.id}><OrganicPostCell post={post} /><td>{post.type === 'REELS' ? 'REELS' : post.format}</td><td>{integer(post.reach)}</td><td>{integer(post.views)}</td><td>{integer(post.interactions)}</td><td>{percent(post.engagementRate)}</td><td>{integer(post.saves)}</td><td>{integer(post.shares)}</td></tr>)}</tbody></table></div></section>}
     </>}
 
     {(channel === 'intelligence' || channel === 'paid') && <>

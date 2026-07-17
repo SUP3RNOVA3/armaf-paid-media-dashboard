@@ -1,0 +1,45 @@
+.data-table td:first-child {
+  min-width: 320px;
+  max-width: 430px;
+}
+
+.organic-ledger-post {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+  gap: 11px;
+}
+
+.organic-ledger-thumb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  color: #fff;
+  background: #171916;
+  border: 1px solid var(--line);
+}
+
+.organic-ledger-thumb img {
+  object-fit: cover;
+}
+
+.organic-ledger-post > span:last-child {
+  min-width: 0;
+}
+
+.organic-ledger-post strong {
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+@media (max-width: 700px) {
+  .data-table td:first-child {
+    min-width: 260px;
+  }
+}
