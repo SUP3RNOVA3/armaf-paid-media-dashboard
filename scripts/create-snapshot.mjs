@@ -27,7 +27,7 @@ const reports = [
     periodStart: '2026-04-01',
     periodEnd: '2026-04-30',
     file: 'armaf-paid-media-report-2520-03-april-2026-v2.json',
-    pdf: '/reports/armaf-paid-media-report-2520-03-april-2026-v2.pdf'
+    pdf: '/reports/armaf-paid-media-report-2520-03-april-2026.pdf'
   },
   {
     id: 'may-2026',

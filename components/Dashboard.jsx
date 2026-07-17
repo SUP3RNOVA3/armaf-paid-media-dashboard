@@ -316,7 +316,7 @@ export default function Dashboard({ initialSnapshot }) {
 
     {channel === 'google' && <GoogleDashboard data={initialSnapshot.googleAds} />}
 
-    <footer><span>ARMAF USA · PERFORMANCE INTELLIGENCE · SUP3RNOVA</span><p>Reporting period: February–June 2026 · Sources: Meta Graph API, paid media report snapshots and Google Ads reporting.</p></footer>
+    <footer><span>ARMAF USA · PERFORMANCE INTELLIGENCE · SUP3RNOVA</span><p>Sources: Meta Graph API, paid media report snapshots and Google Ads reporting.</p></footer>
 
     {selectedAd && <div className="modal-backdrop" onClick={() => setSelectedAd(null)}><aside className="modal" onClick={(e) => e.stopPropagation()}><button className="close" onClick={() => setSelectedAd(null)}><X /></button><div className="modal-image">{selectedAd.image && <Image src={selectedAd.image} alt="" fill unoptimized />}</div><div className="modal-copy"><span>PAID META · {selectedAd.reportLabel}</span><h3>{selectedAd.name}</h3><p>{selectedAd.campaign}</p><div className="modal-kpis">{visiblePaidMetrics.slice(0, 5).map(([key, label, formatter]) => <div key={key}><strong>{formatter(selectedAd[key])}</strong><span>{label}</span></div>)}</div>{selectedAd.permalink && <a href={selectedAd.permalink} target="_blank">Open post <ArrowUpRight size={14} /></a>}</div></aside></div>}
   </main>;
