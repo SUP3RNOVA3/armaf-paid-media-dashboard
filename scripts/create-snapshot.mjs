@@ -5,6 +5,9 @@ const root = process.cwd();
 const sourceDir = process.env.ARMAF_SOURCE_DIR || '/root/.openclaw/workspace/projects/armaf/ad-spend-report';
 const outFile = path.join(root, 'public/data/dashboard-snapshot.json');
 const assetDir = path.join(root, 'public/assets/ad-images');
+const organicSourceFile = process.env.ARMAF_ORGANIC_FILE || '/root/.openclaw/workspace/projects/armaf/organic-meta-report/armaf-organic-meta-data.json';
+const organicMediaSource = path.join(path.dirname(organicSourceFile), 'media');
+const organicMediaOut = path.join(root, 'public/assets/organic');
 
 const reports = [
   {
@@ -153,6 +156,79 @@ const campaigns = Object.values(ads.reduce((acc, ad) => {
   return acc;
 }, {})).map(addCtr).sort((a, b) => b.spend - a.spend);
 
+function average(rows, key) {
+  return rows.length ? rows.reduce((sum, row) => sum + Number(row[key] || 0), 0) / rows.length : 0;
+}
+
+function organicSnapshot() {
+  if (!fs.existsSync(organicSourceFile)) return null;
+  const raw = JSON.parse(fs.readFileSync(organicSourceFile, 'utf8'));
+  const monthly = raw.monthly || [];
+  const agencyStart = raw.source?.agency_start || '2026-02-01';
+  const agencyMonth = agencyStart.slice(0, 7);
+  const pre = monthly.filter((row) => row.month < agencyMonth);
+  const post = monthly.filter((row) => row.month >= agencyMonth);
+  const comparablePost = post.filter((row) => row.month !== '2026-07');
+  const compareKeys = ['account_reach', 'account_views', 'account_total_interactions', 'profile_views', 'website_clicks', 'total_posts', 'total_engagement'];
+  const comparison = Object.fromEntries(compareKeys.map((key) => {
+    const before = average(pre, key);
+    const after = average(comparablePost, key);
+    return [key, { before, after, lift: before ? ((after / before) - 1) * 100 : null }];
+  }));
+  const localFiles = new Set(raw.local_media_files || []);
+  fs.mkdirSync(organicMediaOut, { recursive: true });
+  for (const filename of localFiles) {
+    const source = path.join(organicMediaSource, filename);
+    const destination = path.join(organicMediaOut, filename);
+    if (fs.existsSync(source)) fs.copyFileSync(source, destination);
+  }
+  const media = (raw.instagram?.media || []).map((item) => {
+    const filename = `ig-${item.id}.jpg`;
+    return {
+      id: item.id,
+      caption: item.caption || '',
+      type: item.media_product_type || item.media_type || 'POST',
+      date: item.date,
+      month: item.month,
+      permalink: item.permalink || '',
+      image: localFiles.has(filename) ? `/assets/organic/${filename}` : '',
+      reach: Number(item.insights?.reach || 0),
+      views: Number(item.insights?.views || 0),
+      likes: Number(item.insights?.likes || item.like_count || 0),
+      comments: Number(item.insights?.comments || item.comments_count || 0),
+      saves: Number(item.insights?.saved || 0),
+      shares: Number(item.insights?.shares || 0),
+      interactions: Number(item.insights?.total_interactions || 0)
+    };
+  });
+  const topContent = media
+    .filter((item) => item.image)
+    .sort((a, b) => b.interactions - a.interactions || b.reach - a.reach)
+    .slice(0, 12);
+  return {
+    periodStart: raw.source?.period_start,
+    periodEndExclusive: raw.source?.period_until_exclusive,
+    agencyStart,
+    generatedAt: raw.generated_at,
+    limitations: raw.source?.limitations || [],
+    accounts: raw.accounts,
+    monthly,
+    comparison: { preMonths: pre.length, postMonths: comparablePost.length, excludesPartialJuly: true, metrics: comparison },
+    totals: monthly.reduce((acc, row) => {
+      for (const key of compareKeys) acc[key] = (acc[key] || 0) + Number(row[key] || 0);
+      acc.ig_posts = (acc.ig_posts || 0) + Number(row.ig_posts || 0);
+      acc.fb_posts = (acc.fb_posts || 0) + Number(row.fb_posts || 0);
+      acc.ig_content_reach = (acc.ig_content_reach || 0) + Number(row.ig_content_reach || 0);
+      acc.ig_content_views = (acc.ig_content_views || 0) + Number(row.ig_content_views || 0);
+      acc.ig_total_interactions = (acc.ig_total_interactions || 0) + Number(row.ig_total_interactions || 0);
+      acc.fb_engagement = (acc.fb_engagement || 0) + Number(row.fb_reactions || 0) + Number(row.fb_comments || 0) + Number(row.fb_shares || 0);
+      acc.fb_clicks = (acc.fb_clicks || 0) + Number(row.fb_clicks || 0);
+      return acc;
+    }, {}),
+    topContent
+  };
+}
+
 const snapshot = {
   brand: 'Armaf USA',
   title: 'Paid Media Dashboard',
@@ -167,7 +243,15 @@ const snapshot = {
   },
   reports: reportData,
   campaigns,
-  ads
+  ads,
+  organicData: organicSnapshot(),
+  googleAds: {
+    status: 'placeholder',
+    label: 'Awaiting Google Ads connection',
+    channel: 'Display / Banner',
+    demoMetrics: { impressions: 1840000, viewableRate: 71.2, clicks: 6840, ctr: 0.37, cpm: 4.82 },
+    disclaimer: 'Illustrative placeholder values only. Not included in any live totals or comparisons.'
+  }
 };
 
 fs.mkdirSync(path.dirname(outFile), { recursive: true });

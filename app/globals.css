@@ -1,17 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;520;620;720;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 
 :root {
   color-scheme: light;
-  --bg: #f5f6f3;
-  --surface: #ffffff;
-  --surface-soft: #eef1ec;
-  --ink: #151515;
-  --muted: #69706a;
-  --line: #dcded7;
+  --bg: #f4f2ed;
+  --surface: #fbfaf7;
+  --surface-soft: #ece9e1;
+  --ink: #171a18;
+  --muted: #6d716d;
+  --line: #d8d4ca;
   --green: #1f6f5b;
   --blue: #315f9f;
   --coral: #b85c43;
-  --gold: #9a742f;
+  --gold: #9e7737;
   --plum: #695c8f;
   --shadow: 0 16px 40px rgba(21, 21, 21, 0.08);
 }
@@ -28,7 +28,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: Inter, Arial, sans-serif;
+  font-family: 'DM Sans', Arial, sans-serif;
   line-height: 1.4;
 }
 

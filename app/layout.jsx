@@ -1,8 +1,8 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'Armaf Paid Media Dashboard',
-  description: 'Interactive paid media reporting dashboard for Armaf USA.'
+  title: 'Armaf Performance Intelligence',
+  description: 'Unified organic and paid media intelligence for Armaf USA.'
 };
 
 export default function RootLayout({ children }) {

@@ -1,6 +1,8 @@
-# Armaf Paid Media Dashboard
+# Armaf Performance Intelligence
 
-Interactive Next.js dashboard for Armaf paid media reports.
+Executive Next.js intelligence dashboard combining real Meta organic behavior (Jul 2025–Jul 2026) with the existing paid Meta reporting snapshot. Google Display is represented only as a clearly labeled connection placeholder.
+
+Organic pre/post comparisons use monthly averages: Jul 2025–Jan 2026 versus Feb–Jun 2026. Partial July 2026 remains visible in trends but is excluded from the normalized agency-era comparison.
 
 ## Stack
 
