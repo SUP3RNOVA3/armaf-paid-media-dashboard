@@ -1,11 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import {
   ArrowUpRight, BarChart3, CircleDot, Download, Eye, Grid2X2, ImageIcon,
   Instagram, Layers3, MousePointerClick, Search, Sparkles, TrendingUp, Users, X,
-  Bookmark, MessageCircle, Repeat2, Gauge, CalendarRange, Leaf
+  Bookmark, MessageCircle, Repeat2, Gauge, CalendarRange, Leaf, LockKeyhole
 } from 'lucide-react';
 import { compact, integer, money, percent } from '@/lib/format';
 import './dashboard.css';
@@ -19,8 +19,13 @@ const paidMetrics = [
 
 const visiblePaidMetrics = paidMetrics.filter(([key]) => key !== 'spend');
 const isSodaPop = (post) => /soda\s*pop/i.test(post?.caption || '');
+const isHiddenTrendingPost = (post) => post?.permalink?.includes('DPT2HDKjIlV');
 const trendingPostCodes = ['DZfeouwjBwA', 'DX2XK9BkWJd', 'DY0eNjKIGds', 'DZYbKpzFDul'];
 const uniquePosts = (posts) => [...new Map(posts.filter(Boolean).map((post) => [post.id || post.permalink, post])).values()];
+const googleReportDownloads = {
+  'may-2026': { label: 'May 2026 · Google', pdf: '/reports/google-campaign-performance-may-2026.pdf' },
+  'june-2026': { label: 'June 2026 · Google', pdf: '/reports/google-campaign-performance-june-2026.pdf' }
+};
 
 const organicMetricOptions = [
   ['account_reach', 'Account reach'], ['account_views', 'Account views'],
@@ -200,6 +205,9 @@ function OrganicPostCell({ post }) {
 }
 
 export default function Dashboard({ initialSnapshot }) {
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState(false);
   const [channel, setChannel] = useState('intelligence');
   const [period, setPeriod] = useState('all');
   const [campaign, setCampaign] = useState('all');
@@ -209,6 +217,7 @@ export default function Dashboard({ initialSnapshot }) {
   const [organicQuery, setOrganicQuery] = useState('');
   const [query, setQuery] = useState('');
   const [selectedAd, setSelectedAd] = useState(null);
+  useEffect(() => { setIsUnlocked(sessionStorage.getItem('armaf-dashboard-unlocked') === 'true'); }, []);
   const reports = useMemo(() => initialSnapshot.reports || [], [initialSnapshot.reports]);
   const ads = useMemo(() => initialSnapshot.ads || [], [initialSnapshot.ads]);
   const organic = initialSnapshot.organicData;
@@ -239,8 +248,21 @@ export default function Dashboard({ initialSnapshot }) {
   const selectedInteractions = organicTotals.total_engagement;
   const selectedReach = organicTotals.ig_content_reach;
   const trendingContent = trendingPostCodes.map((code) => (organic?.media || []).find((post) => post.permalink?.includes(code))).filter(Boolean);
-  const organicTrendingContent = uniquePosts([...organicMedia.filter((post) => (post.image || post.thumbnail) && !isSodaPop(post)).slice(0, 12), ...trendingContent]);
-  const executiveTrendingContent = uniquePosts([...organic.topContent.filter((post) => !isSodaPop(post)).slice(0, 6), ...trendingContent]);
+  const organicTrendingContent = uniquePosts([...organicMedia.filter((post) => (post.image || post.thumbnail) && !isSodaPop(post) && !isHiddenTrendingPost(post)).slice(0, 12), ...trendingContent]).filter((post) => !isHiddenTrendingPost(post));
+  const executiveTrendingContent = uniquePosts([...organic.topContent.filter((post) => !isSodaPop(post) && !isHiddenTrendingPost(post)).slice(0, 6), ...trendingContent]).filter((post) => !isHiddenTrendingPost(post));
+
+  const unlockDashboard = (event) => {
+    event.preventDefault();
+    if (password === 'SUP3R') {
+      sessionStorage.setItem('armaf-dashboard-unlocked', 'true');
+      setIsUnlocked(true);
+      setPasswordError(false);
+      return;
+    }
+    setPasswordError(true);
+  };
+
+  if (!isUnlocked) return <main className="password-gate"><form onSubmit={unlockDashboard}><LockKeyhole size={28} /><span>ARMAF USA</span><h1>Performance Intelligence</h1><p>Enter the dashboard password to continue.</p><input type="password" value={password} onChange={(event) => { setPassword(event.target.value); setPasswordError(false); }} placeholder="Password" aria-label="Dashboard password" autoFocus /><button type="submit">Access dashboard</button>{passwordError && <small>Incorrect password. Try again.</small>}</form></main>;
 
   return <main className="dashboard">
     <header className="masthead">
@@ -289,7 +311,7 @@ export default function Dashboard({ initialSnapshot }) {
       <section className="paid-toolbar"><select aria-label="Paid period" value={period} onChange={(e) => setPeriod(e.target.value)}><option value="all">February–June 2026</option>{reports.map((report) => <option key={report.id} value={report.id}>{report.label}</option>)}</select><select aria-label="Paid campaign" value={campaign} onChange={(e) => setCampaign(e.target.value)}><option value="all">All campaigns</option>{campaigns.map((item) => <option key={item}>{item}</option>)}</select><select aria-label="Paid metric" value={paidMetric} onChange={(e) => setPaidMetric(e.target.value)}>{visiblePaidMetrics.filter(([key]) => channel !== 'intelligence' || ['reach', 'engagements'].includes(key)).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select><label><span className="sr-only">Search paid creative</span><Search size={15} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search creative or campaign" /></label></section>
       <section className="paid-metrics">{visiblePaidMetrics.map(([key, label, formatter]) => <article key={key}><span>{label}</span><strong>{formatter(paidTotals[key])}</strong></article>)}</section>
       <section className="panel creative-panel"><div className="panel-head"><div><span>PAID CREATIVE LEADERBOARD</span><h3>Top ads by {paidMetrics.find(([key]) => key === paidMetric)?.[1].toLowerCase()}</h3></div><small>{filteredAds.length} ads · {currentFormatter(paidTotals[paidMetric])} total</small></div>{filteredAds.length ? <div className="creative-grid">{filteredAds.slice(0, channel === 'paid' ? 24 : 8).map((ad) => <PaidCreative key={`${ad.reportId}-${ad.id}`} ad={ad} metric={paidMetric} onOpen={setSelectedAd} />)}</div> : <div className="empty-state"><Search /><strong>No matching paid media</strong><span>Adjust the period, campaign or search filters.</span></div>}</section>
-      <section className="reports-row">{reports.map((report) => <a key={report.id} href={report.pdf} target="_blank"><span>{report.label}</span><Download size={15} /></a>)}</section>
+      <section className="reports-row">{reports.flatMap((report) => [{ key: `${report.id}-meta`, label: `${report.label} · Meta`, pdf: report.pdf }, ...(googleReportDownloads[report.id] ? [{ key: `${report.id}-google`, ...googleReportDownloads[report.id] }] : [])]).map((document) => <a key={document.key} href={document.pdf} target="_blank" rel="noopener noreferrer"><span>{document.label}</span><Download size={15} /></a>)}</section>
     </>}
 
     {channel === 'google' && <GoogleDashboard data={initialSnapshot.googleAds} />}

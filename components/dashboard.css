@@ -41,6 +41,7 @@
 .quality-index strong{font-size:25px;font-weight:700;color:var(--gold)}
 .creative-card{background:var(--surface-soft)}
 .google-module{padding:38px 0}
+.password-gate{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 50% 20%,rgba(184,154,98,.15),transparent 32%),#111714;color:#fff}.password-gate form{width:min(100%,390px);display:grid;gap:14px;border:1px solid rgba(215,191,145,.32);background:#17211d;padding:38px}.password-gate form>svg{color:#d7bf91}.password-gate span{color:#d7bf91;font-size:10px;font-weight:800;letter-spacing:.18em}.password-gate h1{margin:0;font-family:Georgia,serif;font-size:38px;font-weight:400;line-height:1}.password-gate p{margin:0 0 6px;color:#adb7b1;font-size:13px}.password-gate input,.password-gate button{height:46px;border:1px solid rgba(255,255,255,.2);padding:0 14px;font:inherit}.password-gate input{background:#101613;color:#fff}.password-gate button{border-color:#d7bf91;background:#d7bf91;color:#111714;font-weight:800;cursor:pointer}.password-gate small{color:#ef9b8c}
 .module-header{display:flex;justify-content:space-between;align-items:flex-start;gap:30px;margin-bottom:16px}
 .module-header h2{margin:5px 0;font-size:22px}
 .module-header p{max-width:700px;margin:0;color:var(--muted);font-size:11px}
