@@ -240,7 +240,7 @@ export default function Dashboard({ initialSnapshot }) {
     </nav>
 
     {(channel === 'intelligence' || channel === 'organic') && organic && <>
-      <section className="section-title"><div><span>ORGANIC META</span><h2>Performance overview</h2></div><p>Accumulated reporting for February–June 2026.</p></section>
+      <section className="section-title"><div><span>ORGANIC META</span><h2>Performance overview</h2></div><p>February–June 2026 performance compared against the Jul 2025–Jan 2026 monthly average.</p></section>
       <section className="lift-grid">
         {comparisonCards.map(([label, key, Icon]) => { const item = organic.comparison.metrics[key]; return <article key={key} className="lift-card"><Icon size={18} /><span>{label}</span><strong>{delta(item.lift)}</strong><div><small>Pre {compact(item.before)}/mo</small><small>Post {compact(item.after)}/mo</small></div></article>; })}
       </section>
