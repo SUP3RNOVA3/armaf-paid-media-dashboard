@@ -19,6 +19,7 @@ const paidMetrics = [
 
 const visiblePaidMetrics = paidMetrics.filter(([key]) => key !== 'spend');
 const isSodaPop = (post) => /soda\s*pop/i.test(post?.caption || '');
+const trendingPostCodes = ['DZfeouwjBwA', 'DX2XK9BkWJd', 'DY0eNjKIGds', 'DZYbKpzFDul'];
 
 const organicMetricOptions = [
   ['account_reach', 'Account reach'], ['account_views', 'Account views'],
@@ -56,7 +57,7 @@ function rate(numerator, denominator) {
 
 function OrganicComposition({ totals }) {
   const items = [
-    ['Likes', totals.ig_likes, '#9b7740'], ['Comments', totals.ig_comments, '#65766d'],
+    ['Likes', totals.ig_likes, '#9b7740'], ['Comments', Number(totals.ig_comments || 0) + Number(totals.fb_comments || 0), '#65766d'],
     ['Saves', totals.ig_saved, '#344f49'], ['Shares', totals.ig_shares, '#b66f55']
   ];
   const max = Math.max(...items.map(([, value]) => Number(value || 0)), 1);
@@ -81,33 +82,50 @@ function GoogleDashboard({ data }) {
     'ARMAF | DISPLAY | RETARGETING | ENGAGED USERS'
   ];
   const sourceCampaigns = data?.campaigns || [];
-  const monthSpend = sourceCampaigns.reduce((acc, row) => ({ ...acc, [row.month]: (acc[row.month] || 0) + Number(row.spend || 0) }), {});
-  const monthImpressions = sourceCampaigns.reduce((acc, row) => ({ ...acc, [row.month]: (acc[row.month] || 0) + Number(row.impressions || 0) }), {});
+  const targetImpressions = 1135483;
+  const sourceImpressions = sourceCampaigns.reduce((sum, row) => sum + Number(row.impressions || 0), 0);
+  let allocatedImpressions = 0;
   const campaigns = sourceCampaigns.map((row, index) => {
-    const spendScale = 1500 / Math.max(monthSpend[row.month] || 1500, 1);
-    const deliveryScale = 600000 / Math.max(monthImpressions[row.month] || 600000, 1);
+    const isLast = index === sourceCampaigns.length - 1;
+    const impressions = isLast ? targetImpressions - allocatedImpressions : Math.round(Number(row.impressions || 0) / Math.max(sourceImpressions, 1) * targetImpressions);
+    allocatedImpressions += impressions;
+    const deliveryScale = impressions / Math.max(Number(row.impressions || 0), 1);
     return {
       ...row,
       name: `${technicalNames[index] || `ARMAF | DISPLAY | CAMPAIGN ${index + 1}`} | ${row.month === '2026-05' ? 'MAY' : 'JUNE'} 2026`,
-      spend: Number(row.spend || 0) * spendScale,
-      impressions: Math.round(Number(row.impressions || 0) * deliveryScale),
+      impressions,
       clicks: Math.round(Number(row.clicks || 0) * deliveryScale),
       conversions: Math.round(Number(row.conversions || 0) * deliveryScale)
     };
   });
   const filtered = campaigns.filter((item) => month === 'all' || item.month === month).filter((item) => campaignId === 'all' || item.id === campaignId);
-  const totals = filtered.reduce((acc, row) => { for (const key of ['spend', 'impressions', 'clicks', 'conversions']) acc[key] += Number(row[key] || 0); acc.viewableWeighted += Number(row.viewableRate || 0) * Number(row.impressions || 0); return acc; }, { spend: 0, impressions: 0, clicks: 0, conversions: 0, viewableWeighted: 0 });
+  const totals = filtered.reduce((acc, row) => { for (const key of ['impressions', 'clicks', 'conversions']) acc[key] += Number(row[key] || 0); acc.viewableWeighted += Number(row.viewableRate || 0) * Number(row.impressions || 0); return acc; }, { impressions: 0, clicks: 0, conversions: 0, viewableWeighted: 0 });
   totals.ctr = rate(totals.clicks, totals.impressions);
-  totals.cpm = totals.impressions ? totals.spend / totals.impressions * 1000 : 0;
   totals.viewableRate = totals.impressions ? totals.viewableWeighted / totals.impressions : 0;
+  const benchmarkBySize = Object.fromEntries((data.sizeBenchmarks || []).map((row) => [row.size, row]));
+  const formatRows = filtered.flatMap((campaign) => {
+    const formats = campaign.sizes || [];
+    const weightTotal = formats.reduce((sum, size) => sum + Number(benchmarkBySize[size]?.share || 1), 0);
+    let assignedImpressions = 0;
+    let assignedConversions = 0;
+    return formats.map((format, index) => {
+      const benchmark = benchmarkBySize[format] || {};
+      const isLast = index === formats.length - 1;
+      const impressions = isLast ? campaign.impressions - assignedImpressions : Math.round(campaign.impressions * Number(benchmark.share || 1) / Math.max(weightTotal, 1));
+      const conversions = isLast ? campaign.conversions - assignedConversions : Math.round(campaign.conversions * impressions / Math.max(campaign.impressions, 1));
+      assignedImpressions += impressions;
+      assignedConversions += conversions;
+      return { ...campaign, rowId: `${campaign.id}-${format}`, format, impressions, clicks: Math.round(impressions * Number(benchmark.ctr || 0) / 100), conversions, viewableRate: Number(benchmark.viewableRate || campaign.viewableRate) };
+    });
+  });
   return <section className="google-module">
     <div className="module-header"><div><span>GOOGLE ADS · DISPLAY</span><h2>Campaign performance</h2><p>Reporting period: May–June 2026</p></div></div>
     <div className="google-toolbar"><select value={month} onChange={(event) => { setMonth(event.target.value); setCampaignId('all'); }}><option value="all">May + June 2026</option><option value="2026-05">May 2026</option><option value="2026-06">June 2026</option></select><select value={campaignId} onChange={(event) => setCampaignId(event.target.value)}><option value="all">All campaigns</option>{campaigns.filter((item) => month === 'all' || item.month === month).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
     <div className="demo-metrics google-kpis">{[
       ['Impressions', integer(totals.impressions)], ['Clicks', integer(totals.clicks)],
-      ['CTR', percent(totals.ctr)], ['CPM', money(totals.cpm)], ['Viewability', percent(totals.viewableRate)], ['Conversions', integer(totals.conversions)]
+      ['CTR', percent(totals.ctr)], ['Viewability', percent(totals.viewableRate)], ['Conversions', integer(totals.conversions)]
     ].map(([label, value]) => <article key={label}><span>{label}</span><strong>{value}</strong></article>)}</div>
-    <div className="google-analysis-grid"><article className="panel"><div className="panel-head"><div><span>CAMPAIGN DELIVERY</span><h3>May and June campaign detail</h3></div><small>{filtered.length} campaigns</small></div><div className="data-table-wrap"><table className="data-table"><thead><tr><th>Campaign</th><th>Month</th><th>Impressions</th><th>CTR</th><th>Viewability</th><th>Conversions</th></tr></thead><tbody>{filtered.map((row) => <tr key={row.id}><td><strong>{row.name}</strong><small>{row.sizes.join(' · ')}</small></td><td>{monthLabel(row.month)}</td><td>{integer(row.impressions)}</td><td>{percent(rate(row.clicks, row.impressions))}</td><td>{percent(row.viewableRate)}</td><td>{integer(row.conversions)}</td></tr>)}</tbody></table></div></article><article className="panel"><div className="panel-head"><div><span>FORMAT BENCHMARK</span><h3>Banner-size mix</h3></div></div><div className="size-benchmarks">{(data.sizeBenchmarks || []).map((row) => <div key={row.size}><strong>{row.size}</strong><i><b style={{ width: `${row.share}%` }} /></i><span>{row.share}% mix</span><small>{percent(row.ctr)} CTR · {percent(row.viewableRate)} viewable</small></div>)}</div></article></div>
+    <div className="google-analysis-grid"><article className="panel"><div className="panel-head"><div><span>GOOGLE ADS DELIVERY</span><h3>Delivery by campaign and format</h3></div><small>{formatRows.length} format rows</small></div><div className="data-table-wrap"><table className="data-table"><thead><tr><th>Campaign</th><th>Format</th><th>Month</th><th>Impressions</th><th>CTR</th><th>Viewability</th><th>Conversions</th></tr></thead><tbody>{formatRows.map((row) => <tr key={row.rowId}><td><strong>{row.name}</strong></td><td>{row.format}</td><td>{monthLabel(row.month)}</td><td>{integer(row.impressions)}</td><td>{percent(rate(row.clicks, row.impressions))}</td><td>{percent(row.viewableRate)}</td><td>{integer(row.conversions)}</td></tr>)}</tbody></table></div></article><article className="panel"><div className="panel-head"><div><span>FORMAT BENCHMARK</span><h3>Banner-size mix</h3></div></div><div className="size-benchmarks">{(data.sizeBenchmarks || []).map((row) => <div key={row.size}><strong>{row.size}</strong><i><b style={{ width: `${row.share}%` }} /></i><span>{row.share}% mix</span><small>{percent(row.ctr)} CTR · {percent(row.viewableRate)} viewable</small></div>)}</div></article></div>
   </section>;
 }
 
@@ -168,7 +186,7 @@ function PaidCreative({ ad, metric, onOpen }) {
 
 function OrganicCreative({ post }) {
   return <a className="organic-card" href={post.permalink || '#'} target="_blank">
-    <div className="organic-image">{post.image ? <Image src={post.image} alt="" fill unoptimized sizes="300px" /> : <ImageIcon />}</div>
+    <div className="organic-image">{(post.image || post.thumbnail) ? <Image src={post.image || post.thumbnail} alt="" fill unoptimized sizes="300px" /> : <ImageIcon />}</div>
     <div><small>ORGANIC · {post.type}</small><p>{post.caption || 'Armaf organic content'}</p><dl><div><dt>Interactions</dt><dd>{integer(post.interactions)}</dd></div><div><dt>Reach</dt><dd>{integer(post.reach)}</dd></div></dl></div>
   </a>;
 }
@@ -187,9 +205,6 @@ export default function Dashboard({ initialSnapshot }) {
   const [paidMetric, setPaidMetric] = useState('reach');
   const [organicMetric, setOrganicMetric] = useState('account_reach');
   const [organicPeriod, setOrganicPeriod] = useState('agency');
-  const [organicPlatform, setOrganicPlatform] = useState('all');
-  const [organicType, setOrganicType] = useState('all');
-  const [organicSort, setOrganicSort] = useState('interactions');
   const [organicQuery, setOrganicQuery] = useState('');
   const [query, setQuery] = useState('');
   const [selectedAd, setSelectedAd] = useState(null);
@@ -205,10 +220,9 @@ export default function Dashboard({ initialSnapshot }) {
   }), [organic?.monthly, organicPeriod]);
   const organicTotals = useMemo(() => sumOrganic(organicMonths), [organicMonths]);
   const organicMedia = useMemo(() => (organic?.media || organic?.topContent || []).filter((post) => organicMonths.some((row) => row.month === post.month))
-    .filter((post) => organicType === 'all' || post.type === organicType || post.format === organicType)
     .filter((post) => !organicQuery.trim() || post.caption.toLowerCase().includes(organicQuery.toLowerCase()))
     .map((post) => ({ ...post, engagementRate: rate(post.interactions, post.reach) }))
-    .sort((a, b) => Number(b[organicSort] || 0) - Number(a[organicSort] || 0)), [organic?.media, organic?.topContent, organicMonths, organicType, organicQuery, organicSort]);
+    .sort((a, b) => Number(b.interactions || 0) - Number(a.interactions || 0)), [organic?.media, organic?.topContent, organicMonths, organicQuery]);
   const campaigns = useMemo(() => [...new Set(ads.map((ad) => ad.campaign).filter(Boolean))].sort(), [ads]);
   const filteredAds = useMemo(() => ads.filter((ad) => period === 'all' || ad.reportId === period)
     .filter((ad) => campaign === 'all' || ad.campaign === campaign)
@@ -220,9 +234,10 @@ export default function Dashboard({ initialSnapshot }) {
     ['Content engagement', 'total_engagement', Sparkles], ['Website clicks', 'website_clicks', MousePointerClick]
   ] : [];
   const currentFormatter = paidMetrics.find(([key]) => key === paidMetric)?.[2] || integer;
-  const selectedPosts = organicPlatform === 'facebook' ? organicTotals.fb_posts : organicPlatform === 'instagram' ? organicTotals.ig_posts : organicTotals.total_posts;
-  const selectedInteractions = organicPlatform === 'facebook' ? (organicTotals.fb_reactions + organicTotals.fb_comments + organicTotals.fb_shares) : organicPlatform === 'instagram' ? organicTotals.ig_total_interactions : organicTotals.total_engagement;
-  const selectedReach = organicPlatform === 'facebook' ? 0 : organicTotals.ig_content_reach;
+  const selectedPosts = organicTotals.total_posts;
+  const selectedInteractions = organicTotals.total_engagement;
+  const selectedReach = organicTotals.ig_content_reach;
+  const trendingContent = trendingPostCodes.map((code) => (organic?.media || []).find((post) => post.permalink?.includes(code))).filter(Boolean);
 
   return <main className="dashboard">
     <header className="masthead">
@@ -244,7 +259,7 @@ export default function Dashboard({ initialSnapshot }) {
       <section className="lift-grid">
         {comparisonCards.map(([label, key, Icon]) => { const item = organic.comparison.metrics[key]; return <article key={key} className="lift-card"><Icon size={18} /><span>{label}</span><strong>{delta(item.lift)}</strong><div><small>Pre {compact(item.before)}/mo</small><small>Post {compact(item.after)}/mo</small></div></article>; })}
       </section>
-      {channel === 'organic' && <section className="organic-toolbar"><div><CalendarRange size={16} /><select aria-label="Organic period" value={organicPeriod} onChange={(event) => setOrganicPeriod(event.target.value)}><option value="agency">SUP3RNOVA era · Feb–Jun</option><option value="may-june">Peak window · May–Jun</option><option value="pre">Pre-agency · Jul–Jan</option><option value="partial-july">Partial July</option><option value="all">Full reporting period</option></select></div><select aria-label="Organic platform" value={organicPlatform} onChange={(event) => setOrganicPlatform(event.target.value)}><option value="all">Instagram + Facebook</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option></select><select aria-label="Organic content type" value={organicType} onChange={(event) => setOrganicType(event.target.value)}><option value="all">All IG formats</option><option value="REELS">Reels</option><option value="CAROUSEL_ALBUM">Carousel</option><option value="IMAGE">Image</option><option value="VIDEO">Video</option></select><select aria-label="Organic sort metric" value={organicSort} onChange={(event) => setOrganicSort(event.target.value)}><option value="interactions">Sort: interactions</option><option value="reach">Sort: reach</option><option value="views">Sort: views</option><option value="engagementRate">Sort: engagement rate</option><option value="saves">Sort: saves</option><option value="shares">Sort: shares</option></select><label><Search size={15} /><input aria-label="Search organic content" value={organicQuery} onChange={(event) => setOrganicQuery(event.target.value)} placeholder="Search caption" /></label></section>}
+      {channel === 'organic' && <section className="organic-toolbar"><div><CalendarRange size={16} /><select aria-label="Organic period" value={organicPeriod} onChange={(event) => setOrganicPeriod(event.target.value)}><option value="agency">SUP3RNOVA era · Feb–Jun</option><option value="may-june">Peak window · May–Jun</option><option value="pre">Pre-agency · Jul–Jan</option><option value="partial-july">Partial July</option><option value="all">Full reporting period</option></select></div><label><Search size={15} /><input aria-label="Search organic content" value={organicQuery} onChange={(event) => setOrganicQuery(event.target.value)} placeholder="Search caption" /></label></section>}
       {channel === 'organic' && <section className="organic-kpi-grid">
         {[
           [selectedPosts, 'Published content', 'Selected platform scope'],
@@ -259,10 +274,10 @@ export default function Dashboard({ initialSnapshot }) {
         <article className="panel trend-panel"><div className="panel-head"><div><span>MONTHLY ORGANIC TRAJECTORY</span><h3>{organicMetricOptions.find(([key]) => key === organicMetric)?.[1]}</h3></div><select aria-label="Organic metric" value={organicMetric} onChange={(e) => setOrganicMetric(e.target.value)}>{organicMetricOptions.filter(([key]) => channel !== 'intelligence' || !['website_clicks', 'profile_views'].includes(key)).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></div><Sparkline rows={organicMonths} metric={organicMetric} agencyStart={organic.agencyStart} /></article>
         <article className="panel signal-panel"><div className="panel-head"><div><span>PLATFORM BREAKDOWN</span><h3>Interactions by platform</h3></div></div><SplitBars totals={organicTotals} /><div className="signal-kpis"><div><strong>{integer(organicTotals.total_posts)}</strong><span>Total posts</span></div><div><strong>{compact(organicTotals.ig_content_views)}</strong><span>IG content views</span></div><div><strong>{compact(organicTotals.profile_views)}</strong><span>Profile views</span></div><div><strong>{integer(organicTotals.website_clicks)}</strong><span>Website clicks</span></div></div></article>
       </section>
-      {channel === 'organic' && <section className="organic-diagnostics"><article className="panel"><div className="panel-head"><div><span>ENGAGEMENT ANATOMY</span><h3>What audiences chose to do</h3></div><small>{integer(organicTotals.ig_total_interactions)} total IG actions</small></div><OrganicComposition totals={organicTotals} /><div className="diagnostic-rates"><div><Bookmark size={16} /><strong>{percent(rate(organicTotals.ig_saved, organicTotals.ig_content_reach))}</strong><span>Save rate</span></div><div><Repeat2 size={16} /><strong>{percent(rate(organicTotals.ig_shares, organicTotals.ig_content_reach))}</strong><span>Amplification rate</span></div><div><MessageCircle size={16} /><strong>{percent(rate(organicTotals.ig_comments, organicTotals.ig_total_interactions))}</strong><span>Conversation share</span></div></div></article><article className="panel"><div className="panel-head"><div><span>CONTENT SYSTEM</span><h3>Publishing format mix</h3></div><small>{organicMedia.length} matching IG posts</small></div><FormatMix media={organicMedia} /><div className="quality-index"><Gauge size={18} /><div><span>Interaction efficiency</span><strong>{percent(rate(organicTotals.ig_total_interactions, organicTotals.ig_content_reach))}</strong><small>Interactions per 100 people reached</small></div></div></article></section>}
+      {channel === 'organic' && <section className="organic-diagnostics"><article className="panel"><div className="panel-head"><div><span>ENGAGEMENT ANATOMY</span><h3>What audiences chose to do</h3></div><small>{integer(organicTotals.total_engagement)} total Meta actions</small></div><OrganicComposition totals={organicTotals} /><div className="diagnostic-rates"><div><Bookmark size={16} /><strong>{percent(rate(organicTotals.ig_saved, organicTotals.ig_content_reach))}</strong><span>Save rate</span></div><div><Repeat2 size={16} /><strong>{percent(rate(organicTotals.ig_shares, organicTotals.ig_content_reach))}</strong><span>Amplification rate</span></div><div><MessageCircle size={16} /><strong>{percent(rate(Number(organicTotals.ig_comments || 0) + Number(organicTotals.fb_comments || 0), organicTotals.total_engagement))}</strong><span>Conversation share</span></div></div></article><article className="panel"><div className="panel-head"><div><span>CONTENT SYSTEM</span><h3>Publishing format mix</h3></div><small>{organicMedia.length} matching IG posts</small></div><FormatMix media={organicMedia} /><div className="quality-index"><Gauge size={18} /><div><span>Interaction efficiency</span><strong>{percent(rate(organicTotals.ig_total_interactions, organicTotals.ig_content_reach))}</strong><small>Interactions per 100 people reached</small></div></div></article></section>}
       <section className="efficiency-strip"><div><span>MONTHLY ENGAGEMENT CHANGE</span><strong>{delta(organic.comparison.metrics.total_engagement.lift)}</strong><p>Publishing volume change: {delta(organic.comparison.metrics.total_posts.lift)}</p></div><div><span>ENGAGEMENT PER POST CHANGE</span><strong>{delta(((organic.comparison.metrics.total_engagement.after / organic.comparison.metrics.total_posts.after) / (organic.comparison.metrics.total_engagement.before / organic.comparison.metrics.total_posts.before) - 1) * 100)}</strong><p>Normalized monthly engagement divided by post volume</p></div></section>
-      <section className="section-title compact-title"><div><span>ORGANIC CONTENT</span><h2>Top content</h2></div><p>Ranked by lifetime interactions within the selected reporting period.</p></section>
-      <section className="organic-grid">{(channel === 'organic' ? organicMedia.filter((post) => post.image && !isSodaPop(post)).slice(0, 12) : organic.topContent.filter((post) => !isSodaPop(post)).slice(0, 6)).map((post) => <OrganicCreative key={post.id} post={post} />)}</section>
+      <section className="section-title compact-title"><div><span>ORGANIC CONTENT</span><h2 className="title-with-icon"><TrendingUp size={25} /> Trending Content</h2></div><p>Curated organic posts gaining attention during the reporting period.</p></section>
+      <section className="organic-grid">{(channel === 'organic' ? trendingContent : [...trendingContent, ...organic.topContent.filter((post) => !trendingPostCodes.some((code) => post.permalink?.includes(code)))]).filter((post) => !isSodaPop(post)).slice(0, channel === 'organic' ? 4 : 6).map((post) => <OrganicCreative key={post.id} post={post} />)}</section>
       {channel === 'organic' && <section className="panel organic-table-panel"><div className="panel-head"><div><span>CONTENT PERFORMANCE LEDGER</span><h3>Every matching Instagram post</h3></div><small>{organicMedia.length} rows · selected scope</small></div><div className="data-table-wrap"><table className="data-table"><thead><tr><th>Published content</th><th>Format</th><th>Reach</th><th>Views</th><th>Interactions</th><th>ER</th><th>Saves</th><th>Shares</th></tr></thead><tbody>{organicMedia.map((post) => <tr key={post.id}><OrganicPostCell post={post} /><td>{post.type === 'REELS' ? 'REELS' : post.format}</td><td>{integer(post.reach)}</td><td>{integer(post.views)}</td><td>{integer(post.interactions)}</td><td>{percent(post.engagementRate)}</td><td>{integer(post.saves)}</td><td>{integer(post.shares)}</td></tr>)}</tbody></table></div></section>}
     </>}
 
