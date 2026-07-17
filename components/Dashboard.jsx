@@ -20,6 +20,7 @@ const paidMetrics = [
 const visiblePaidMetrics = paidMetrics.filter(([key]) => key !== 'spend');
 const isSodaPop = (post) => /soda\s*pop/i.test(post?.caption || '');
 const trendingPostCodes = ['DZfeouwjBwA', 'DX2XK9BkWJd', 'DY0eNjKIGds', 'DZYbKpzFDul'];
+const uniquePosts = (posts) => [...new Map(posts.filter(Boolean).map((post) => [post.id || post.permalink, post])).values()];
 
 const organicMetricOptions = [
   ['account_reach', 'Account reach'], ['account_views', 'Account views'],
@@ -238,6 +239,8 @@ export default function Dashboard({ initialSnapshot }) {
   const selectedInteractions = organicTotals.total_engagement;
   const selectedReach = organicTotals.ig_content_reach;
   const trendingContent = trendingPostCodes.map((code) => (organic?.media || []).find((post) => post.permalink?.includes(code))).filter(Boolean);
+  const organicTrendingContent = uniquePosts([...organicMedia.filter((post) => (post.image || post.thumbnail) && !isSodaPop(post)).slice(0, 12), ...trendingContent]);
+  const executiveTrendingContent = uniquePosts([...organic.topContent.filter((post) => !isSodaPop(post)).slice(0, 6), ...trendingContent]);
 
   return <main className="dashboard">
     <header className="masthead">
@@ -277,7 +280,7 @@ export default function Dashboard({ initialSnapshot }) {
       {channel === 'organic' && <section className="organic-diagnostics"><article className="panel"><div className="panel-head"><div><span>ENGAGEMENT ANATOMY</span><h3>What audiences chose to do</h3></div><small>{integer(organicTotals.total_engagement)} total Meta actions</small></div><OrganicComposition totals={organicTotals} /><div className="diagnostic-rates"><div><Bookmark size={16} /><strong>{percent(rate(organicTotals.ig_saved, organicTotals.ig_content_reach))}</strong><span>Save rate</span></div><div><Repeat2 size={16} /><strong>{percent(rate(organicTotals.ig_shares, organicTotals.ig_content_reach))}</strong><span>Amplification rate</span></div><div><MessageCircle size={16} /><strong>{percent(rate(Number(organicTotals.ig_comments || 0) + Number(organicTotals.fb_comments || 0), organicTotals.total_engagement))}</strong><span>Conversation share</span></div></div></article><article className="panel"><div className="panel-head"><div><span>CONTENT SYSTEM</span><h3>Publishing format mix</h3></div><small>{organicMedia.length} matching IG posts</small></div><FormatMix media={organicMedia} /><div className="quality-index"><Gauge size={18} /><div><span>Interaction efficiency</span><strong>{percent(rate(organicTotals.ig_total_interactions, organicTotals.ig_content_reach))}</strong><small>Interactions per 100 people reached</small></div></div></article></section>}
       <section className="efficiency-strip"><div><span>MONTHLY ENGAGEMENT CHANGE</span><strong>{delta(organic.comparison.metrics.total_engagement.lift)}</strong><p>Publishing volume change: {delta(organic.comparison.metrics.total_posts.lift)}</p></div><div><span>ENGAGEMENT PER POST CHANGE</span><strong>{delta(((organic.comparison.metrics.total_engagement.after / organic.comparison.metrics.total_posts.after) / (organic.comparison.metrics.total_engagement.before / organic.comparison.metrics.total_posts.before) - 1) * 100)}</strong><p>Normalized monthly engagement divided by post volume</p></div></section>
       <section className="section-title compact-title"><div><span>ORGANIC CONTENT</span><h2 className="title-with-icon"><TrendingUp size={25} /> Trending Content</h2></div><p>Curated organic posts gaining attention during the reporting period.</p></section>
-      <section className="organic-grid">{(channel === 'organic' ? trendingContent : [...trendingContent, ...organic.topContent.filter((post) => !trendingPostCodes.some((code) => post.permalink?.includes(code)))]).filter((post) => !isSodaPop(post)).slice(0, channel === 'organic' ? 4 : 6).map((post) => <OrganicCreative key={post.id} post={post} />)}</section>
+      <section className="organic-grid">{(channel === 'organic' ? organicTrendingContent : executiveTrendingContent).map((post) => <OrganicCreative key={post.id} post={post} />)}</section>
       {channel === 'organic' && <section className="panel organic-table-panel"><div className="panel-head"><div><span>CONTENT PERFORMANCE LEDGER</span><h3>Every matching Instagram post</h3></div><small>{organicMedia.length} rows · selected scope</small></div><div className="data-table-wrap"><table className="data-table"><thead><tr><th>Published content</th><th>Format</th><th>Reach</th><th>Views</th><th>Interactions</th><th>ER</th><th>Saves</th><th>Shares</th></tr></thead><tbody>{organicMedia.map((post) => <tr key={post.id}><OrganicPostCell post={post} /><td>{post.type === 'REELS' ? 'REELS' : post.format}</td><td>{integer(post.reach)}</td><td>{integer(post.views)}</td><td>{integer(post.interactions)}</td><td>{percent(post.engagementRate)}</td><td>{integer(post.saves)}</td><td>{integer(post.shares)}</td></tr>)}</tbody></table></div></section>}
     </>}
 
