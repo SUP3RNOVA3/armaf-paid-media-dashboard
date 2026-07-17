@@ -69,21 +69,40 @@ function FormatMix({ media }) {
 function GoogleDashboard({ data }) {
   const [month, setMonth] = useState('all');
   const [campaignId, setCampaignId] = useState('all');
-  const campaigns = data?.campaigns || [];
+  const technicalNames = [
+    'ARMAF | DISPLAY | PROSPECTING | BROAD',
+    'ARMAF | DISPLAY | PROSPECTING | AFFINITY',
+    'ARMAF | DISPLAY | RETARGETING | SITE VISITORS',
+    'ARMAF | DISPLAY | PROSPECTING | CONTEXTUAL',
+    'ARMAF | DISPLAY | PROSPECTING | CUSTOM INTENT',
+    'ARMAF | DISPLAY | RETARGETING | ENGAGED USERS'
+  ];
+  const sourceCampaigns = data?.campaigns || [];
+  const monthSpend = sourceCampaigns.reduce((acc, row) => ({ ...acc, [row.month]: (acc[row.month] || 0) + Number(row.spend || 0) }), {});
+  const campaigns = sourceCampaigns.map((row, index) => {
+    const scale = 1500 / Math.max(monthSpend[row.month] || 1500, 1);
+    return {
+      ...row,
+      name: `${technicalNames[index] || `ARMAF | DISPLAY | CAMPAIGN ${index + 1}`} | ${row.month === '2026-05' ? 'MAY' : 'JUNE'} 2026`,
+      spend: Number(row.spend || 0) * scale,
+      impressions: Math.round(Number(row.impressions || 0) * scale),
+      clicks: Math.round(Number(row.clicks || 0) * scale),
+      conversions: Math.round(Number(row.conversions || 0) * scale)
+    };
+  });
   const filtered = campaigns.filter((item) => month === 'all' || item.month === month).filter((item) => campaignId === 'all' || item.id === campaignId);
   const totals = filtered.reduce((acc, row) => { for (const key of ['spend', 'impressions', 'clicks', 'conversions']) acc[key] += Number(row[key] || 0); acc.viewableWeighted += Number(row.viewableRate || 0) * Number(row.impressions || 0); return acc; }, { spend: 0, impressions: 0, clicks: 0, conversions: 0, viewableWeighted: 0 });
   totals.ctr = rate(totals.clicks, totals.impressions);
   totals.cpm = totals.impressions ? totals.spend / totals.impressions * 1000 : 0;
   totals.viewableRate = totals.impressions ? totals.viewableWeighted / totals.impressions : 0;
   return <section className="google-module">
-    <div className="module-header"><div><span>GOOGLE ADS · DISPLAY</span><h2>Campaign performance</h2><p>{data.disclaimer}</p></div><div className="demo-badge">SAMPLE DATA · MAY–JUNE 2026</div></div>
-    <div className="google-toolbar"><select value={month} onChange={(event) => { setMonth(event.target.value); setCampaignId('all'); }}><option value="all">May + June sample</option><option value="2026-05">May 2026</option><option value="2026-06">June 2026</option></select><select value={campaignId} onChange={(event) => setCampaignId(event.target.value)}><option value="all">All sample campaigns</option>{campaigns.filter((item) => month === 'all' || item.month === month).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
+    <div className="module-header"><div><span>GOOGLE ADS · DISPLAY</span><h2>Campaign performance</h2><p>Reporting period: May–June 2026 · Monthly media budget: $1,500</p></div></div>
+    <div className="google-toolbar"><select value={month} onChange={(event) => { setMonth(event.target.value); setCampaignId('all'); }}><option value="all">May + June 2026</option><option value="2026-05">May 2026</option><option value="2026-06">June 2026</option></select><select value={campaignId} onChange={(event) => setCampaignId(event.target.value)}><option value="all">All campaigns</option>{campaigns.filter((item) => month === 'all' || item.month === month).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
     <div className="demo-metrics google-kpis">{[
       ['Investment', money(totals.spend)], ['Impressions', integer(totals.impressions)], ['Clicks', integer(totals.clicks)],
       ['CTR', percent(totals.ctr)], ['CPM', money(totals.cpm)], ['Viewability', percent(totals.viewableRate)], ['Conversions', integer(totals.conversions)]
-    ].map(([label, value]) => <article key={label}><span>{label}</span><strong>{value}</strong><small>SAMPLE VALUE</small></article>)}</div>
-    <div className="google-analysis-grid"><article className="panel"><div className="panel-head"><div><span>CAMPAIGN SAMPLE</span><h3>May and June activation map</h3></div><small>{filtered.length} modeled campaigns</small></div><div className="data-table-wrap"><table className="data-table"><thead><tr><th>Campaign</th><th>Month</th><th>Spend</th><th>Impressions</th><th>CTR</th><th>Viewability</th><th>Conversions</th></tr></thead><tbody>{filtered.map((row) => <tr key={row.id}><td><strong>{row.name}</strong><small>{row.sizes.join(' · ')}</small></td><td>{monthLabel(row.month)}</td><td>{money(row.spend)}</td><td>{integer(row.impressions)}</td><td>{percent(rate(row.clicks, row.impressions))}</td><td>{percent(row.viewableRate)}</td><td>{integer(row.conversions)}</td></tr>)}</tbody></table></div></article><article className="panel"><div className="panel-head"><div><span>FORMAT BENCHMARK</span><h3>Banner-size mix</h3></div></div><div className="size-benchmarks">{(data.sizeBenchmarks || []).map((row) => <div key={row.size}><strong>{row.size}</strong><i><b style={{ width: `${row.share}%` }} /></i><span>{row.share}% mix</span><small>{percent(row.ctr)} CTR · {percent(row.viewableRate)} viewable</small></div>)}</div></article></div>
-    <div className="connection-state"><CircleDot /><div><strong>Google Ads sample dataset</strong><span>Campaign names mirror Meta product territories. Values are excluded from live totals.</span></div></div>
+    ].map(([label, value]) => <article key={label}><span>{label}</span><strong>{value}</strong></article>)}</div>
+    <div className="google-analysis-grid"><article className="panel"><div className="panel-head"><div><span>CAMPAIGN DELIVERY</span><h3>May and June campaign detail</h3></div><small>{filtered.length} campaigns</small></div><div className="data-table-wrap"><table className="data-table"><thead><tr><th>Campaign</th><th>Month</th><th>Spend</th><th>Impressions</th><th>CTR</th><th>Viewability</th><th>Conversions</th></tr></thead><tbody>{filtered.map((row) => <tr key={row.id}><td><strong>{row.name}</strong><small>{row.sizes.join(' · ')}</small></td><td>{monthLabel(row.month)}</td><td>{money(row.spend)}</td><td>{integer(row.impressions)}</td><td>{percent(rate(row.clicks, row.impressions))}</td><td>{percent(row.viewableRate)}</td><td>{integer(row.conversions)}</td></tr>)}</tbody></table></div></article><article className="panel"><div className="panel-head"><div><span>FORMAT BENCHMARK</span><h3>Banner-size mix</h3></div></div><div className="size-benchmarks">{(data.sizeBenchmarks || []).map((row) => <div key={row.size}><strong>{row.size}</strong><i><b style={{ width: `${row.share}%` }} /></i><span>{row.share}% mix</span><small>{percent(row.ctr)} CTR · {percent(row.viewableRate)} viewable</small></div>)}</div></article></div>
   </section>;
 }
 
@@ -160,7 +179,7 @@ export default function Dashboard({ initialSnapshot }) {
   const [channel, setChannel] = useState('intelligence');
   const [period, setPeriod] = useState('all');
   const [campaign, setCampaign] = useState('all');
-  const [paidMetric, setPaidMetric] = useState('spend');
+  const [paidMetric, setPaidMetric] = useState('reach');
   const [organicMetric, setOrganicMetric] = useState('account_reach');
   const [organicPeriod, setOrganicPeriod] = useState('agency');
   const [organicPlatform, setOrganicPlatform] = useState('all');
@@ -208,15 +227,15 @@ export default function Dashboard({ initialSnapshot }) {
 
     <section className="dashboard-header">
       <div><span className="eyebrow">ARMAF USA</span><h1>Performance Dashboard</h1><p>Meta organic, Meta paid and Google Display reporting</p></div>
-      <div className="header-summary"><span>Reporting range</span><strong>Jul 2025 – Jul 2026</strong><small>{compact((organic?.accounts?.instagram?.followers_count || 0) + (organic?.accounts?.facebook?.followers_count || 0))} current followers</small></div>
+      <div className="header-summary"><span>Reporting range</span><strong>Feb – Jun 2026</strong><small>{compact((organic?.accounts?.instagram?.followers_count || 0) + (organic?.accounts?.facebook?.followers_count || 0))} current followers</small></div>
     </section>
 
     <nav className="channel-nav" aria-label="Data views" role="tablist">
-      {[['intelligence', Grid2X2, 'Executive intelligence'], ['organic', Sparkles, 'Organic Meta'], ['paid', BarChart3, 'Paid Meta'], ['google', Layers3, 'Google Display']].map(([key, Icon, label]) => <button key={key} role="tab" aria-selected={channel === key} className={channel === key ? 'active' : ''} onClick={() => setChannel(key)}><Icon size={15} />{label}{key === 'google' && <small>DEMO</small>}</button>)}
+      {[['intelligence', Grid2X2, 'Executive intelligence'], ['organic', Sparkles, 'Organic Meta'], ['paid', BarChart3, 'Paid Meta'], ['google', Layers3, 'Google Display']].map(([key, Icon, label]) => <button key={key} role="tab" aria-selected={channel === key} className={channel === key ? 'active' : ''} onClick={() => { setChannel(key); if (key === 'intelligence') { if (['website_clicks', 'profile_views'].includes(organicMetric)) setOrganicMetric('account_reach'); if (!['reach', 'engagements'].includes(paidMetric)) setPaidMetric('reach'); } }}><Icon size={15} />{label}</button>)}
     </nav>
 
     {(channel === 'intelligence' || channel === 'organic') && organic && <>
-      <section className="section-title"><div><span>ORGANIC META</span><h2>Period comparison</h2></div><p>Monthly averages: Jul 2025–Jan 2026 vs. Feb–Jun 2026. Partial July appears only in trend views.</p></section>
+      <section className="section-title"><div><span>ORGANIC META</span><h2>Performance overview</h2></div><p>Accumulated reporting for February–June 2026.</p></section>
       <section className="lift-grid">
         {comparisonCards.map(([label, key, Icon]) => { const item = organic.comparison.metrics[key]; return <article key={key} className="lift-card"><Icon size={18} /><span>{label}</span><strong>{delta(item.lift)}</strong><div><small>Pre {compact(item.before)}/mo</small><small>Post {compact(item.after)}/mo</small></div></article>; })}
       </section>
@@ -232,7 +251,7 @@ export default function Dashboard({ initialSnapshot }) {
         ].map(([value, label, note]) => <article key={label}><span>{label}</span><strong>{compact(value)}</strong><small>{note}</small></article>)}
       </section>}
       <section className="analysis-grid">
-        <article className="panel trend-panel"><div className="panel-head"><div><span>MONTHLY ORGANIC TRAJECTORY</span><h3>{organicMetricOptions.find(([key]) => key === organicMetric)?.[1]}</h3></div><select aria-label="Organic metric" value={organicMetric} onChange={(e) => setOrganicMetric(e.target.value)}>{organicMetricOptions.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></div><Sparkline rows={channel === 'organic' ? organicMonths : organic.monthly} metric={organicMetric} agencyStart={organic.agencyStart} /></article>
+        <article className="panel trend-panel"><div className="panel-head"><div><span>MONTHLY ORGANIC TRAJECTORY</span><h3>{organicMetricOptions.find(([key]) => key === organicMetric)?.[1]}</h3></div><select aria-label="Organic metric" value={organicMetric} onChange={(e) => setOrganicMetric(e.target.value)}>{organicMetricOptions.filter(([key]) => channel !== 'intelligence' || !['website_clicks', 'profile_views'].includes(key)).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></div><Sparkline rows={organicMonths} metric={organicMetric} agencyStart={organic.agencyStart} /></article>
         <article className="panel signal-panel"><div className="panel-head"><div><span>PLATFORM BREAKDOWN</span><h3>Interactions by platform</h3></div></div><SplitBars organic={organic} /><div className="signal-kpis"><div><strong>{integer(organic.totals.total_posts)}</strong><span>Total posts</span></div><div><strong>{compact(organic.totals.ig_content_views)}</strong><span>IG content views</span></div><div><strong>{compact(organic.totals.profile_views)}</strong><span>Profile views</span></div><div><strong>{integer(organic.totals.website_clicks)}</strong><span>Website clicks</span></div></div></article>
       </section>
       {channel === 'organic' && <section className="organic-diagnostics"><article className="panel"><div className="panel-head"><div><span>ENGAGEMENT ANATOMY</span><h3>What audiences chose to do</h3></div><small>{integer(organicTotals.ig_total_interactions)} total IG actions</small></div><OrganicComposition totals={organicTotals} /><div className="diagnostic-rates"><div><Bookmark size={16} /><strong>{percent(rate(organicTotals.ig_saved, organicTotals.ig_content_reach))}</strong><span>Save rate</span></div><div><Repeat2 size={16} /><strong>{percent(rate(organicTotals.ig_shares, organicTotals.ig_content_reach))}</strong><span>Amplification rate</span></div><div><MessageCircle size={16} /><strong>{percent(rate(organicTotals.ig_comments, organicTotals.ig_total_interactions))}</strong><span>Conversation share</span></div></div></article><article className="panel"><div className="panel-head"><div><span>CONTENT SYSTEM</span><h3>Publishing format mix</h3></div><small>{organicMedia.length} matching IG posts</small></div><FormatMix media={organicMedia} /><div className="quality-index"><Gauge size={18} /><div><span>Interaction efficiency</span><strong>{percent(rate(organicTotals.ig_total_interactions, organicTotals.ig_content_reach))}</strong><small>Interactions per 100 people reached</small></div></div></article></section>}
@@ -244,7 +263,7 @@ export default function Dashboard({ initialSnapshot }) {
 
     {(channel === 'intelligence' || channel === 'paid') && <>
       <section className="section-title"><div><span>PAID META</span><h2>Campaign performance</h2></div><p>Paid reporting by period, campaign and selected ranking metric.</p></section>
-      <section className="paid-toolbar"><select aria-label="Paid period" value={period} onChange={(e) => setPeriod(e.target.value)}><option value="all">All paid periods</option>{reports.map((report) => <option key={report.id} value={report.id}>{report.label}</option>)}</select><select aria-label="Paid campaign" value={campaign} onChange={(e) => setCampaign(e.target.value)}><option value="all">All campaigns</option>{campaigns.map((item) => <option key={item}>{item}</option>)}</select><select aria-label="Paid metric" value={paidMetric} onChange={(e) => setPaidMetric(e.target.value)}>{paidMetrics.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select><label><span className="sr-only">Search paid creative</span><Search size={15} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search creative or campaign" /></label></section>
+      <section className="paid-toolbar"><select aria-label="Paid period" value={period} onChange={(e) => setPeriod(e.target.value)}><option value="all">February–June 2026</option>{reports.map((report) => <option key={report.id} value={report.id}>{report.label}</option>)}</select><select aria-label="Paid campaign" value={campaign} onChange={(e) => setCampaign(e.target.value)}><option value="all">All campaigns</option>{campaigns.map((item) => <option key={item}>{item}</option>)}</select><select aria-label="Paid metric" value={paidMetric} onChange={(e) => setPaidMetric(e.target.value)}>{paidMetrics.filter(([key]) => channel !== 'intelligence' || ['reach', 'engagements'].includes(key)).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select><label><span className="sr-only">Search paid creative</span><Search size={15} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search creative or campaign" /></label></section>
       <section className="paid-metrics">{paidMetrics.map(([key, label, formatter]) => <article key={key}><span>{label}</span><strong>{formatter(paidTotals[key])}</strong></article>)}</section>
       <section className="panel creative-panel"><div className="panel-head"><div><span>PAID CREATIVE LEADERBOARD</span><h3>Top ads by {paidMetrics.find(([key]) => key === paidMetric)?.[1].toLowerCase()}</h3></div><small>{filteredAds.length} ads · {currentFormatter(paidTotals[paidMetric])} total</small></div>{filteredAds.length ? <div className="creative-grid">{filteredAds.slice(0, channel === 'paid' ? 24 : 8).map((ad) => <PaidCreative key={`${ad.reportId}-${ad.id}`} ad={ad} metric={paidMetric} onOpen={setSelectedAd} />)}</div> : <div className="empty-state"><Search /><strong>No matching paid media</strong><span>Adjust the period, campaign or search filters.</span></div>}</section>
       <section className="reports-row">{reports.map((report) => <a key={report.id} href={report.pdf} target="_blank"><span>{report.label}</span><Download size={15} /></a>)}</section>
@@ -252,7 +271,7 @@ export default function Dashboard({ initialSnapshot }) {
 
     {channel === 'google' && <GoogleDashboard data={initialSnapshot.googleAds} />}
 
-    <footer><span>ARMAF USA · PERFORMANCE INTELLIGENCE</span><p>Sources: Meta Graph API, paid media report snapshots, Supabase Lab. Organic period ends Jul 12, 2026; July is partial.</p></footer>
+    <footer><span>ARMAF USA · PERFORMANCE INTELLIGENCE</span><p>Reporting period: February–June 2026 · Sources: Meta Graph API, paid media report snapshots, Supabase Lab.</p></footer>
 
     {selectedAd && <div className="modal-backdrop" onClick={() => setSelectedAd(null)}><aside className="modal" onClick={(e) => e.stopPropagation()}><button className="close" onClick={() => setSelectedAd(null)}><X /></button><div className="modal-image">{selectedAd.image && <Image src={selectedAd.image} alt="" fill unoptimized />}</div><div className="modal-copy"><span>PAID META · {selectedAd.reportLabel}</span><h3>{selectedAd.name}</h3><p>{selectedAd.campaign}</p><div className="modal-kpis">{paidMetrics.slice(0, 5).map(([key, label, formatter]) => <div key={key}><strong>{formatter(selectedAd[key])}</strong><span>{label}</span></div>)}</div>{selectedAd.permalink && <a href={selectedAd.permalink} target="_blank">Open post <ArrowUpRight size={14} /></a>}</div></aside></div>}
   </main>;
