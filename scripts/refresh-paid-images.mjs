@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import sharp from 'sharp';
 
 const API = 'https://graph.facebook.com/v23.0';
 const root = process.cwd();
@@ -85,7 +86,17 @@ async function candidateUrls(creativeId, token, pageAccessToken) {
   }
   if (creative.effective_object_story_id) {
     try {
-      const story = await graph(creative.effective_object_story_id, 'full_picture,attachments{media,type}', pageAccessToken);
+      const story = await graph(creative.effective_object_story_id, 'full_picture,attachments{media,type,target,url,subattachments}', pageAccessToken);
+      const collectAttachmentImages = (node) => {
+        if (!node || typeof node !== 'object') return;
+        if (node.media?.image?.src) {
+          const width = Number(node.media.image.width || 0);
+          const height = Number(node.media.image.height || 0);
+          candidates.push({ url: node.media.image.src, score: width * height + 200000, source: 'story attachment' });
+        }
+        for (const child of node.subattachments?.data || []) collectAttachmentImages(child);
+      };
+      for (const attachment of story.attachments?.data || []) collectAttachmentImages(attachment);
       if (story.full_picture) candidates.push({ url: story.full_picture, score: 3600, source: 'story full picture' });
     } catch (_) {
       // Dark posts do not always expose story media to the system user.
@@ -106,7 +117,11 @@ async function downloadBest(creativeId, token, pageAccessToken) {
       const ext = type.includes('png') ? 'png' : type.includes('webp') ? 'webp' : 'jpg';
       const existing = ['jpg', 'jpeg', 'png', 'webp'].map((item) => path.join(assetDir, `${creativeId}.${item}`)).filter(fs.existsSync);
       const currentBytes = Math.max(0, ...existing.map((file) => fs.statSync(file).size));
-      if (buffer.length <= currentBytes * 1.05) return { status: 'kept', bytes: currentBytes, source: candidate.source };
+      const currentFile = existing.sort((a, b) => fs.statSync(b).size - fs.statSync(a).size)[0];
+      const candidateSharpness = (await sharp(buffer).greyscale().stats()).sharpness;
+      const currentSharpness = currentFile ? (await sharp(currentFile).greyscale().stats()).sharpness : 0;
+      const materiallySharper = candidateSharpness > currentSharpness * 1.2;
+      if (buffer.length <= currentBytes * 1.05 && !materiallySharper) return { status: 'kept', bytes: currentBytes, source: candidate.source };
       for (const file of existing) fs.unlinkSync(file);
       fs.writeFileSync(path.join(assetDir, `${creativeId}.${ext}`), buffer);
       return { status: 'upgraded', bytes: buffer.length, source: candidate.source };

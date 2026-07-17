@@ -136,7 +136,7 @@ function SplitBars({ organic }) {
 function PaidCreative({ ad, metric, onOpen }) {
   return <button className="creative-card" onClick={() => onOpen(ad)}>
     <div className="creative-image">
-      {ad.image ? <Image src={ad.image} alt="" fill unoptimized sizes="260px" /> : <ImageIcon size={28} />}
+      {ad.image ? <Image src={ad.image} alt="" fill unoptimized loading="eager" sizes="260px" /> : <ImageIcon size={28} />}
       <span>PAID · META</span>
     </div>
     <div className="creative-copy"><small>{ad.reportLabel}</small><strong>{ad.name}</strong><div><b>{paidMetrics.find(([key]) => key === metric)?.[2](ad[metric])}</b><span>{ad.campaign}</span></div></div>
